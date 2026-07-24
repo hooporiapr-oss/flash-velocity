@@ -136,13 +136,13 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 </div>
 
 <div id="controls">
-  <a class="ctrl-btn" href="/index.html">← Exit</a>
+  <a class="ctrl-btn" href="/vr-lab.html">← Exit</a>
   <button class="ctrl-btn" id="fsBtnGame">⛶ Full Court</button>
 </div>
 
 <!-- INTRO -->
 <div id="screen-intro">
-  <a class="intro-back" href="/index.html">← Exit</a>
+  <a class="intro-back" href="/vr-lab.html">← Exit</a>
   <button class="intro-fs" id="fsBtn">⛶ Fullscreen</button>
   <div class="vrr-logo">CHOICE <span>REACTION</span></div>
   <div class="vrr-sub">Left or Right · To The Beat</div>
@@ -158,6 +158,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <div id="screen-end">
   <div class="final-num" id="endNum">0</div>
   <div class="final-label">Final Score</div>
+  <div class="final-acc" id="endAvgBpm"></div>
   <div class="final-acc" id="endAcc"></div>
   <h2 id="endHead">Drill Complete!</h2>
   <div id="endSub">Great choices. Next player, beat this number!</div>
@@ -173,7 +174,7 @@ var BEST_KEY='rct-choice-reaction-best';
 function $(id){return document.getElementById(id)}
 
 var phase='idle';
-var idx=0,score=0,best=0,correctCount=0;
+var idx=0,score=0,best=0,correctCount=0,totalRT=0,rtCount=0;
 var timers=[],tapLocked=false,shownAt=0,currentSide=null;
 var sessionBest=0, playersThisSession=0;
 var stimulus=$('stimulus'),stage=$('stage');
@@ -201,6 +202,7 @@ if(fsg)fsg.onclick=async function(){try{if(!document.fullscreenElement)await doc
 
 function msg(t,c){var e=$('msg');e.textContent=t;e.className=c||'watch'}
 function clrT(){timers.forEach(clearTimeout);timers=[]}
+function bpmFromMs(v){return v?Math.round(60000/v):0}
 function ripple(x,y){var r=document.createElement('div');r.className='ripple';r.style.left=x+'px';r.style.top=y+'px';r.style.width='50px';r.style.height='50px';document.body.appendChild(r);setTimeout(function(){r.remove()},520)}
 function flash(color){var f=$('flash');f.style.background=color;f.style.opacity='1';setTimeout(function(){f.style.opacity='0'},100)}
 
@@ -218,7 +220,7 @@ function startDrill(){
 }
 
 function runDrill(){
-  phase='running';idx=0;score=0;correctCount=0;
+  phase='running';idx=0;score=0;correctCount=0;totalRT=0;rtCount=0;
   $('hScore').textContent='0';$('hLastMs').textContent='--';$('hLeft').textContent=TOTAL;
   msg('GET READY...','go');
   timers.push(setTimeout(function(){msg('','go');nextTrial()},900));
@@ -273,6 +275,7 @@ function handleChoice(side){
   stimulus.classList.remove('visible');
 
   idx++;
+  totalRT+=rt;rtCount++;
 
   if(isCorrect){
     correctCount++;
@@ -280,10 +283,10 @@ function handleChoice(side){
     score+=pts;
     ripple(rx,ry);flash('rgba(124,58,237,.14)');
     $('hLastMs').textContent=Math.round(rt);
-    msg('✓ '+Math.round(rt)+' MS','correct');
+    msg('✓ '+Math.round(rt)+' MS · '+bpmFromMs(rt)+' BPM','correct');
   }else{
     flash('rgba(255,20,147,.28)');
-    msg('✗ WRONG DIRECTION!','wrong');
+    msg('✗ WRONG DIRECTION! ('+Math.round(rt)+' MS · '+bpmFromMs(rt)+' BPM)','wrong');
   }
 
   $('hScore').textContent=score;
@@ -308,10 +311,12 @@ function endDrill(){
   if(phase==='done')return;
   phase='done';clrT();stopWander();stimulus.classList.remove('visible');
   var finalScore=score;
+  var avgRT=rtCount?Math.round(totalRT/rtCount):0;
   var accPct=idx>0?Math.round((correctCount/idx)*100):0;
   var isNew=finalScore>best;
   if(isNew){best=finalScore;saveBest()}
   $('endNum').textContent=finalScore;
+  $('endAvgBpm').textContent=avgRT?('AVG '+avgRT+'MS · '+bpmFromMs(avgRT)+' BPM'):'';
   $('endAcc').textContent=correctCount+'/'+TOTAL+' correct · '+accPct+'% accuracy';
   if(isNew&&finalScore>0){$('endHead').textContent='🎉 New Best!';$('endSub').textContent='You beat your record with '+finalScore+' points. Sharp choices!'}
   else{$('endHead').textContent='Drill Complete!';$('endSub').textContent='Great choices. Next player, beat this number!'}
