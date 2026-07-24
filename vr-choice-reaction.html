@@ -22,13 +22,15 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 #msg.watch{color:#7c3aed}#msg.go{color:#ffd35a}#msg.correct{color:#00D9A5}#msg.wrong{color:#FF1493}
 
 /* stimulus stage — left half vs right half of the play area */
-#stage{position:fixed;top:22%;bottom:26%;left:0;right:0;z-index:12}
+#stage{position:fixed;top:14%;bottom:22%;left:0;right:0;z-index:12}
 #stimulus{
   position:absolute;top:50%;width:110px;height:110px;border-radius:50%;
   transform:translate(-50%,-50%) scale(0);
-  transition:transform .1s cubic-bezier(.34,1.56,.64,1);
+  transition:transform .1s cubic-bezier(.34,1.56,.64,1),left .5s linear,top .5s linear;
   background:radial-gradient(circle at 35% 35%,#a78bfa,#7c3aed);
   box-shadow:0 0 40px rgba(124,58,237,.9),0 0 80px rgba(124,58,237,.5);
+  display:flex;align-items:center;justify-content:center;
+  font-size:3.2rem;color:#fff;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.4);
 }
 #stimulus.visible{transform:translate(-50%,-50%) scale(1)}
 .ripple{position:fixed;border-radius:50%;border:3px solid #7c3aed;transform:translate(-50%,-50%) scale(0);pointer-events:none;z-index:14;animation:rippleOut .5s ease-out forwards}
@@ -36,7 +38,9 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 
 /* choice buttons — big, spatially matched left/right */
 #choices{position:fixed;bottom:88px;left:0;right:0;z-index:20;display:flex;gap:14px;padding:0 20px}
-.choice-btn{flex:1;height:120px;border:3px solid rgba(124,58,237,.5);background:rgba(124,58,237,.08);border-radius:20px;color:#fff;font-size:1.4rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .08s}
+.choice-btn{flex:1;height:120px;border:3px solid rgba(124,58,237,.5);background:rgba(124,58,237,.08);border-radius:20px;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .08s}
+.choice-btn .arrow-glyph{font-size:2.6rem;line-height:1}
+.choice-btn .arrow-word{font-size:.7rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#c4b5fd}
 .choice-btn:active{background:rgba(124,58,237,.35);transform:scale(.97)}
 
 #controls{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;justify-content:center;gap:10px;padding:8px 16px 10px;background:linear-gradient(0deg,rgba(0,0,0,.9),transparent)}
@@ -116,8 +120,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <div id="stage"><div id="stimulus"></div></div>
 
 <div id="choices">
-  <button class="choice-btn" id="btnLeft" data-side="left">◀ LEFT</button>
-  <button class="choice-btn" id="btnRight" data-side="right">RIGHT ▶</button>
+  <button class="choice-btn" id="btnLeft" data-side="left"><span class="arrow-glyph">◀</span><span class="arrow-word">Left</span></button>
+  <button class="choice-btn" id="btnRight" data-side="right"><span class="arrow-glyph">▶</span><span class="arrow-word">Right</span></button>
 </div>
 
 <div id="controls">
@@ -131,7 +135,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   <button class="intro-fs" id="fsBtn">⛶ Fullscreen</button>
   <div class="vrr-logo">CHOICE <span>REACTION</span></div>
   <div class="vrr-sub">Left or Right · To The Beat</div>
-  <div class="rule-t"><b>50 rounds.</b> A target lights up on the <b>left</b> or the <b>right</b>. Tap the matching button as fast as you can. No deadline — just how fast, and how right, you are.</div>
+  <div class="rule-t"><b>50 rounds.</b> A dot wanders the screen carrying an arrow &mdash; <b>&#9664;</b> or <b>&#9654;</b>. Read the arrow, not the position, and tap the matching button as fast as you can. No deadline — just how fast, and how right, you are.</div>
   <button class="big-btn" id="bigStart" onclick="startDrill()">▶ START</button>
   <div class="best-line" id="bestLine"></div>
 </div>
@@ -209,17 +213,37 @@ function runDrill(){
   timers.push(setTimeout(function(){msg('','go');nextTrial()},900));
 }
 
+var wanderTimer=null;
+
+function randomStagePos(){
+  var stageRect=stage.getBoundingClientRect();
+  var pad=70;
+  var x=pad+Math.random()*(stageRect.width-pad*2);
+  var y=pad+Math.random()*(stageRect.height-pad*2);
+  return {x:x,y:y};
+}
+
 function nextTrial(){
   if(phase!=='running')return;
   currentSide=(Math.random()<0.5)?'left':'right';
-  var stageRect=stage.getBoundingClientRect();
-  var x = currentSide==='left' ? stageRect.width*0.25 : stageRect.width*0.75;
-  var y = stageRect.height*0.5;
-  stimulus.style.left=x+'px';
-  stimulus.style.top=y+'px';
+  stimulus.textContent=currentSide==='left'?'◀':'▶';
+  var pos=randomStagePos();
+  stimulus.style.left=pos.x+'px';
+  stimulus.style.top=pos.y+'px';
   stimulus.classList.add('visible');
   shownAt=performance.now();
+
+  // The dot wanders continuously while it waits — direction (the arrow)
+  // is what matters, not where it happens to be standing.
+  if(wanderTimer)clearInterval(wanderTimer);
+  wanderTimer=setInterval(function(){
+    if(!stimulus.classList.contains('visible'))return;
+    var p=randomStagePos();
+    stimulus.style.left=p.x+'px';
+    stimulus.style.top=p.y+'px';
+  },550);
 }
+function stopWander(){if(wanderTimer){clearInterval(wanderTimer);wanderTimer=null}}
 
 function handleChoice(side){
   if(phase!=='running')return;
@@ -229,11 +253,10 @@ function handleChoice(side){
 
   var rt=performance.now()-shownAt;
   var isCorrect=(side===currentSide);
+  stopWander();
+  var dotRect=stimulus.getBoundingClientRect();
+  var rx=dotRect.left+dotRect.width/2, ry=dotRect.top+dotRect.height/2;
   stimulus.classList.remove('visible');
-
-  var stageRect=stage.getBoundingClientRect();
-  var rx = side==='left' ? stageRect.left+stageRect.width*0.25 : stageRect.left+stageRect.width*0.75;
-  var ry = stageRect.top+stageRect.height*0.5;
 
   idx++;
 
@@ -267,7 +290,7 @@ $('btnRight').addEventListener('pointerdown',function(e){e.preventDefault();hand
 
 function endDrill(){
   if(phase==='done')return;
-  phase='done';clrT();stimulus.classList.remove('visible');
+  phase='done';clrT();stopWander();stimulus.classList.remove('visible');
   var finalScore=score;
   var accPct=idx>0?Math.round((correctCount/idx)*100):0;
   var isNew=finalScore>best;
