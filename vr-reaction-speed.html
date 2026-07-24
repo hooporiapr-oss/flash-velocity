@@ -47,7 +47,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 #screen-end{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#180000 0%,#000 70%);text-align:center;padding:20px}
 .final-num{font-size:6rem;font-weight:900;color:#ff1e3c;line-height:1;text-shadow:0 0 60px rgba(255,30,60,.9)}
 .final-label{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:#9fb3c8;margin-top:10px}
-.final-bpm{margin-top:6px;font-size:1.1rem;color:#ffd35a;font-weight:900}
+.final-bpm{margin-top:10px;font-size:1.8rem;color:#ffd35a;font-weight:900}
+.final-acc{margin-top:6px;font-size:1.1rem;color:#9fb3c8;font-weight:900}
 #screen-end h2{font-size:1.8rem;font-weight:900;margin:24px 0 8px}
 #endSub{font-size:.9rem;color:#9fb3c8;line-height:1.6;max-width:400px}
 .next-player-btn{margin-top:28px;height:64px;padding:0 40px;border:none;border-radius:16px;background:linear-gradient(120deg,#ff1e3c,#d6102e);color:#fff;font-size:1.15rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(255,30,60,.6)}
@@ -104,13 +105,13 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <div id="target"><div id="target-inner"></div></div>
 
 <div id="controls">
-  <a class="ctrl-btn" href="/index.html">← Exit</a>
+  <a class="ctrl-btn" href="/vr-lab.html">← Exit</a>
   <button class="ctrl-btn" id="fsBtnGame">⛶ Full Court</button>
 </div>
 
 <!-- INTRO -->
 <div id="screen-intro">
-  <a class="intro-back" href="/index.html">← Exit</a>
+  <a class="intro-back" href="/vr-lab.html">← Exit</a>
   <button class="intro-fs" id="fsBtn">⛶ Fullscreen</button>
   <div class="vrr-logo">REACTION <span>SPEED</span></div>
   <div class="vrr-sub">Pure Reaction · To The Beat</div>
@@ -125,8 +126,9 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <!-- END -->
 <div id="screen-end">
   <div class="final-num" id="endNum">0</div>
-  <div class="final-label">Final Score</div>
-  <div class="final-bpm" id="endAvgBpm"></div>
+  <div class="final-label">Avg Reaction Time (ms)</div>
+  <div class="final-bpm" id="endBpm"></div>
+  <div class="final-acc" id="endScoreLine"></div>
   <h2 id="endHead">Drill Complete!</h2>
   <div id="endSub">Great reflexes. Next player, beat this number!</div>
   <button class="next-player-btn" id="nextPlayerBtn">▶ Next Player</button>
@@ -138,11 +140,12 @@ var BPM=100;
 var PACE_MS=Math.round(60000/BPM); // one full beat at 100 BPM between one tap resolving and the next target appearing
 var TOTAL=50;
 var BEST_KEY='rct-reaction-speed-best';
+var BEST_MS_KEY='rct-reaction-speed-best-ms';
 
 function $(id){return document.getElementById(id)}
 
 var phase='idle';
-var idx=0,score=0,best=0,totalRT=0,rtCount=0,bestRT=0;
+var idx=0,score=0,best=0,totalRT=0,rtCount=0,bestRT=0,bestAvgMs=0;
 var timers=[],targetEl=$('target'),targetInner=$('target-inner');
 var targetX=0,targetY=0,tapLocked=false,shownAt=0;
 var sessionBest=0, playersThisSession=0;
@@ -150,10 +153,12 @@ var sessionBest=0, playersThisSession=0;
 function loadBest(){
   best=0;
   try{best=parseInt(localStorage.getItem(BEST_KEY)||'0',10)||0}catch(e){}
+  try{bestAvgMs=parseInt(localStorage.getItem(BEST_MS_KEY)||'0',10)||0}catch(e){bestAvgMs=0}
   $('hBest').textContent=best;
   $('bestLine').innerHTML=best>0?('Your best: <b>'+best+' pts</b>'):'';
 }
 function saveBest(){try{localStorage.setItem(BEST_KEY,String(best))}catch(e){}}
+function saveBestMs(){try{localStorage.setItem(BEST_MS_KEY,String(bestAvgMs))}catch(e){}}
 
 var fsb=$('fsBtn');
 if(fsb)fsb.onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
@@ -241,18 +246,23 @@ function endDrill(){
   phase='done';clrT();targetEl.classList.remove('visible');
   var finalScore=score;
   var avgRT=rtCount?Math.round(totalRT/rtCount):0;
-  var isNew=finalScore>best;
-  if(isNew){best=finalScore;saveBest()}
-  $('endNum').textContent=finalScore;
-  $('endAvgBpm').textContent=avgRT?('AVG '+avgRT+'MS · '+bpmFromMs(avgRT)+' BPM'):'';
-  if(isNew&&finalScore>0){$('endHead').textContent='🎉 New Best!';$('endSub').textContent='You beat your record with '+finalScore+' points. Lightning reflexes!'}
+  var isNewPts=finalScore>best;
+  var isNewMs=avgRT>0&&(bestAvgMs===0||avgRT<bestAvgMs);
+  if(isNewPts){best=finalScore;saveBest()}
+  if(isNewMs){bestAvgMs=avgRT;saveBestMs()}
+
+  $('endNum').textContent=avgRT;
+  $('endBpm').textContent=bpmFromMs(avgRT)+' BPM';
+  $('endScoreLine').textContent=finalScore+' points';
+
+  if(isNewMs&&avgRT>0){$('endHead').textContent='🎉 New Best!';$('endSub').textContent='Your fastest average yet — '+avgRT+'ms. Lightning reflexes!'}
   else{$('endHead').textContent='Drill Complete!';$('endSub').textContent='Great reflexes. Next player, beat this number!'}
 
-  if(finalScore>sessionBest){
-    sessionBest=finalScore;
+  if(avgRT>0&&(sessionBest===0||avgRT<sessionBest)){
+    sessionBest=avgRT;
   }
   playersThisSession++;
-  $('sessionLine').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+' pts'):'');
+  $('sessionLine').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+'ms'):'');
 
   $('screen-end').style.display='flex';
 }
