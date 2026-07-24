@@ -31,8 +31,9 @@ body{
 .hero-title em{font-style:italic;color:#ff1e3c}
 .hero-sub{font-size:1rem;color:#a7adba;max-width:480px;margin:0 auto 8px}
 
-.cards{max-width:920px;margin:44px auto 0;padding:0 24px 90px;display:grid;grid-template-columns:1fr 1fr;gap:22px}
-@media(max-width:720px){.cards{grid-template-columns:1fr}}
+.cards{max-width:1240px;margin:44px auto 0;padding:0 24px 90px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:22px}
+@media(max-width:980px){.cards{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.cards{grid-template-columns:1fr}}
 
 .card{
   position:relative;border-radius:18px;padding:32px 28px 28px;
@@ -48,6 +49,7 @@ body{
 }
 .card.c-reactific{--ac:#00D9A5}
 .card.c-speed{--ac:#ff1e3c}
+.card.c-choice{--ac:#7c3aed}
 .card:hover{border-color:var(--ac)}
 .card-kicker{font-size:.65rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--ac);margin-bottom:14px}
 .card-name{font-family:'Bebas Neue',Arial,sans-serif;font-size:2.1rem;letter-spacing:.05em;color:#fff;margin-bottom:10px;line-height:1}
@@ -77,8 +79,8 @@ body{
     <span class="ticker-unit">ms</span>
   </div>
   <div class="ticker-label">the gap between seeing and doing</div>
-  <h1 class="hero-title display">Two ways to test <em>how fast you really are</em></h1>
-  <p class="hero-sub">Pure reflex, and reflex under pressure. Pick your test.</p>
+  <h1 class="hero-title display">Three ways to test <em>how fast you really are</em></h1>
+  <p class="hero-sub">Pure reflex, reflex under pressure, and reflex under a choice. Pick your test.</p>
 </div>
 
 <div class="cards">
@@ -93,6 +95,12 @@ body{
     <div class="card-name display">REACTION SPEED</div>
     <div class="card-desc">No colors, no rules to remember — just a target that waits for you. 50 taps, each one timed to the millisecond and scored on speed alone.</div>
     <div class="card-cta">Go Reaction Speed <span class="arrow">→</span></div>
+  </a>
+  <a class="card c-choice" href="/vr-choice-reaction.html">
+    <div class="card-kicker">Choice Under Pressure</div>
+    <div class="card-name display">CHOICE REACTION</div>
+    <div class="card-desc">A dot wanders the screen carrying an arrow — up, down, left, or right. Read it, don't just glance at it, and tap the matching direction. 50 rounds, scored on speed and accuracy.</div>
+    <div class="card-cta">Go Choice Reaction <span class="arrow">→</span></div>
   </a>
 </div>
 
