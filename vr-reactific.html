@@ -452,7 +452,7 @@ function endDrill(){
     $('beatLine').textContent='';
   }
   playersThisSession++;
-  $('sessionBest').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+'ms'):'');
+  $('sessionBest').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+'ms · '+bpmFromMs(sessionBest)+' BPM'):'');
 
   $('screen-end').style.display='flex';
 }
