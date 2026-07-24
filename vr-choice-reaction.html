@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Choice Reaction | RITNOME</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;color:#fff;background:#000;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#space{position:fixed;inset:0;background:radial-gradient(ellipse at center,#0a0818 0%,#000 70%);overflow:hidden}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+#edge-glow{position:fixed;inset:0;pointer-events:none;z-index:1;border:3px solid transparent;box-shadow:inset 0 0 80px rgba(124,58,237,.28),0 0 80px rgba(124,58,237,.1)}
+#flash{position:fixed;inset:0;pointer-events:none;z-index:10;opacity:0;transition:opacity .1s}
+
+#hud{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-around;align-items:center;padding:14px 22px;background:linear-gradient(180deg,rgba(0,0,0,.85),transparent)}
+.hud-box{text-align:center}
+.hud-label{font-size:.5rem;color:#7c3aed;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin-bottom:2px}
+.hud-val{font-size:2rem;font-weight:900;line-height:1}
+#hLeft{color:#a78bfa}#hScore{color:#fff;font-size:2.6rem}#hLastMs{color:#ffd35a}#hBest{font-size:1.3rem;color:#9fb3c8}
+
+#msg{position:fixed;top:16%;left:50%;transform:translate(-50%,0);z-index:20;font-size:1.5rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;text-align:center;pointer-events:none;text-shadow:0 0 30px currentColor;transition:opacity .3s}
+#msg.watch{color:#7c3aed}#msg.go{color:#ffd35a}#msg.correct{color:#00D9A5}#msg.wrong{color:#FF1493}
+
+/* stimulus stage — left half vs right half of the play area */
+#stage{position:fixed;top:22%;bottom:26%;left:0;right:0;z-index:12}
+#stimulus{
+  position:absolute;top:50%;width:110px;height:110px;border-radius:50%;
+  transform:translate(-50%,-50%) scale(0);
+  transition:transform .1s cubic-bezier(.34,1.56,.64,1);
+  background:radial-gradient(circle at 35% 35%,#a78bfa,#7c3aed);
+  box-shadow:0 0 40px rgba(124,58,237,.9),0 0 80px rgba(124,58,237,.5);
+}
+#stimulus.visible{transform:translate(-50%,-50%) scale(1)}
+.ripple{position:fixed;border-radius:50%;border:3px solid #7c3aed;transform:translate(-50%,-50%) scale(0);pointer-events:none;z-index:14;animation:rippleOut .5s ease-out forwards}
+@keyframes rippleOut{0%{transform:translate(-50%,-50%) scale(.5);opacity:1}100%{transform:translate(-50%,-50%) scale(2.4);opacity:0}}
+
+/* choice buttons — big, spatially matched left/right */
+#choices{position:fixed;bottom:88px;left:0;right:0;z-index:20;display:flex;gap:14px;padding:0 20px}
+.choice-btn{flex:1;height:120px;border:3px solid rgba(124,58,237,.5);background:rgba(124,58,237,.08);border-radius:20px;color:#fff;font-size:1.4rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .08s}
+.choice-btn:active{background:rgba(124,58,237,.35);transform:scale(.97)}
+
+#controls{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;justify-content:center;gap:10px;padding:8px 16px 10px;background:linear-gradient(0deg,rgba(0,0,0,.9),transparent)}
+.ctrl-btn{height:40px;flex:0 1 170px;max-width:200px;border:2px solid rgba(124,58,237,.5);background:rgba(0,0,0,.4);border-radius:10px;color:#fff;font-size:.85rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
+
+#screen-intro{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0a0818 0%,#000 70%);padding:20px;text-align:center}
+.vrr-logo{font-size:2.6rem;font-weight:900;font-style:italic;letter-spacing:.1em;text-transform:uppercase;text-shadow:0 0 60px rgba(124,58,237,1);margin-bottom:6px}
+.vrr-logo span{color:#7c3aed}
+.vrr-sub{font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:#7c3aed;margin-bottom:28px}
+.rule-t{font-size:.9rem;color:#cbd5e1;line-height:1.5;max-width:420px;margin-bottom:26px}
+.rule-t b{color:#fff}
+.big-btn{width:100%;max-width:440px;height:72px;border:none;border-radius:20px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-size:1.3rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(124,58,237,.7);animation:btnPulse 2s ease-in-out infinite}
+@keyframes btnPulse{0%,100%{box-shadow:0 0 40px rgba(124,58,237,.7)}50%{box-shadow:0 0 80px rgba(124,58,237,1)}}
+.intro-back{position:fixed;top:16px;left:16px;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;text-decoration:none;z-index:60}
+.intro-fs{position:fixed;top:16px;right:16px;padding:8px 16px;border:2px solid rgba(124,58,237,.4);background:rgba(0,0,0,.5);color:#a78bfa;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:60}
+@media(max-width:768px){.intro-fs{display:none}}
+.best-line{margin-top:18px;font-size:.85rem;color:#9fb3c8}
+.best-line b{color:#7c3aed}
+
+#screen-end{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0a0818 0%,#000 70%);text-align:center;padding:20px}
+.final-num{font-size:6rem;font-weight:900;color:#7c3aed;line-height:1;text-shadow:0 0 60px rgba(124,58,237,.9)}
+.final-label{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:#9fb3c8;margin-top:10px}
+.final-acc{margin-top:6px;font-size:1.1rem;color:#ffd35a;font-weight:900}
+#screen-end h2{font-size:1.8rem;font-weight:900;margin:24px 0 8px}
+#endSub{font-size:.9rem;color:#9fb3c8;line-height:1.6;max-width:400px}
+.next-player-btn{margin-top:28px;height:64px;padding:0 40px;border:none;border-radius:16px;background:linear-gradient(120deg,#7c3aed,#5b21b6);color:#fff;font-size:1.15rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(124,58,237,.6)}
+.session-line{margin-top:22px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#7fa8c0}
+
+#countdown{position:fixed;inset:0;z-index:56;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0a0818 0%,#000 70%)}
+#bigCount{font-size:8rem;font-weight:900;color:#7c3aed;text-shadow:0 0 60px rgba(124,58,237,.9)}
+@media(max-width:420px){.vrr-logo{font-size:2rem}.big-btn{height:60px;font-size:1.1rem}.choice-btn{height:96px;font-size:1.1rem}}
+</style>
+</head>
+<body>
+<button id="rp-sound-toggle" onclick="rpToggleSound()" aria-label="Toggle sound" title="Toggle beat sound" style="position:fixed;top:14px;right:14px;z-index:9999;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">🔊</button>
+<script>
+(function(){
+  var _ctxs = [];
+  var NativeAC = window.AudioContext || window.webkitAudioContext;
+  if (NativeAC){
+    function WrappedAC(){
+      var ctx = new NativeAC();
+      _ctxs.push(ctx);
+      if (window.__rpMuted && ctx.suspend) { try{ctx.suspend()}catch(e){} }
+      return ctx;
+    }
+    WrappedAC.prototype = NativeAC.prototype;
+    window.AudioContext = WrappedAC;
+    window.webkitAudioContext = WrappedAC;
+  }
+  window.__rpMuted = false;
+  window.rpToggleSound = function(){
+    window.__rpMuted = !window.__rpMuted;
+    var btn = document.getElementById('rp-sound-toggle');
+    _ctxs.forEach(function(c){
+      try{ if(window.__rpMuted){ c.suspend&&c.suspend(); } else { c.resume&&c.resume(); } }catch(e){}
+    });
+    if(btn){ btn.textContent = window.__rpMuted ? '🔇' : '🔊'; btn.style.opacity = window.__rpMuted ? '.55' : '1'; }
+  };
+})();
+</script>
+
+<div id="space">
+  <canvas id="stars"></canvas>
+  <div id="edge-glow"></div>
+  <div id="flash"></div>
+</div>
+
+<div id="hud">
+  <div class="hud-box"><div class="hud-label">Left</div><div class="hud-val" id="hLeft">50</div></div>
+  <div class="hud-box"><div class="hud-label">Score</div><div class="hud-val" id="hScore">0</div></div>
+  <div class="hud-box"><div class="hud-label">Last</div><div class="hud-val" id="hLastMs">--</div></div>
+  <div class="hud-box"><div class="hud-label">Best</div><div class="hud-val" id="hBest">0</div></div>
+</div>
+
+<div id="msg" class="watch"></div>
+<div id="stage"><div id="stimulus"></div></div>
+
+<div id="choices">
+  <button class="choice-btn" id="btnLeft" data-side="left">◀ LEFT</button>
+  <button class="choice-btn" id="btnRight" data-side="right">RIGHT ▶</button>
+</div>
+
+<div id="controls">
+  <a class="ctrl-btn" href="/vr-lab.html">← Exit</a>
+  <button class="ctrl-btn" id="fsBtnGame">⛶ Full Court</button>
+</div>
+
+<!-- INTRO -->
+<div id="screen-intro">
+  <a class="intro-back" href="/vr-lab.html">← Exit</a>
+  <button class="intro-fs" id="fsBtn">⛶ Fullscreen</button>
+  <div class="vrr-logo">CHOICE <span>REACTION</span></div>
+  <div class="vrr-sub">Left or Right · To The Beat</div>
+  <div class="rule-t"><b>50 rounds.</b> A target lights up on the <b>left</b> or the <b>right</b>. Tap the matching button as fast as you can. No deadline — just how fast, and how right, you are.</div>
+  <button class="big-btn" id="bigStart" onclick="startDrill()">▶ START</button>
+  <div class="best-line" id="bestLine"></div>
+</div>
+
+<!-- COUNTDOWN -->
+<div id="countdown"><div id="bigCount">3</div></div>
+
+<!-- END -->
+<div id="screen-end">
+  <div class="final-num" id="endNum">0</div>
+  <div class="final-label">Final Score</div>
+  <div class="final-acc" id="endAcc"></div>
+  <h2 id="endHead">Drill Complete!</h2>
+  <div id="endSub">Great choices. Next player, beat this number!</div>
+  <button class="next-player-btn" id="nextPlayerBtn">▶ Next Player</button>
+  <div class="session-line" id="sessionLine"></div>
+</div>
+
+<script>
+var PACE_MS=600; // one beat at 100 BPM between one choice resolving and the next stimulus
+var TOTAL=50;
+var BEST_KEY='rct-choice-reaction-best';
+
+function $(id){return document.getElementById(id)}
+
+var phase='idle';
+var idx=0,score=0,best=0,correctCount=0;
+var timers=[],tapLocked=false,shownAt=0,currentSide=null;
+var sessionBest=0, playersThisSession=0;
+var stimulus=$('stimulus'),stage=$('stage');
+
+function loadBest(){
+  best=0;
+  try{best=parseInt(localStorage.getItem(BEST_KEY)||'0',10)||0}catch(e){}
+  $('hBest').textContent=best;
+  $('bestLine').innerHTML=best>0?('Your best: <b>'+best+' pts</b>'):'';
+}
+function saveBest(){try{localStorage.setItem(BEST_KEY,String(best))}catch(e){}}
+
+var fsb=$('fsBtn');
+if(fsb)fsb.onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
+var fsg=$('fsBtnGame');
+if(fsg)fsg.onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
+
+(function(){
+  var c=$('stars'),ctx=c.getContext('2d'),stars=[];
+  function size(){c.width=innerWidth;c.height=innerHeight}
+  size();addEventListener('resize',size);
+  for(var i=0;i<150;i++)stars.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.4+.3,o:Math.random()*.6+.1,s:Math.random()*.5+.2});
+  (function draw(){ctx.clearRect(0,0,c.width,c.height);var t=Date.now()/1000;stars.forEach(function(s){var p=s.o+Math.sin(t*s.s)*.13;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.283);ctx.fillStyle='rgba(255,255,255,'+Math.max(0,Math.min(1,p))+')';ctx.fill()});requestAnimationFrame(draw)})();
+})();
+
+function msg(t,c){var e=$('msg');e.textContent=t;e.className=c||'watch'}
+function clrT(){timers.forEach(clearTimeout);timers=[]}
+function ripple(x,y){var r=document.createElement('div');r.className='ripple';r.style.left=x+'px';r.style.top=y+'px';r.style.width='50px';r.style.height='50px';document.body.appendChild(r);setTimeout(function(){r.remove()},520)}
+function flash(color){var f=$('flash');f.style.background=color;f.style.opacity='1';setTimeout(function(){f.style.opacity='0'},100)}
+
+function startDrill(){
+  if(phase==='running')return;
+  try{ if(!document.fullscreenElement && document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(function(){}); } }catch(e){}
+  $('screen-intro').style.display='none';
+  $('countdown').style.display='flex';
+  var n=3;$('bigCount').textContent=n;
+  var iv=setInterval(function(){
+    n--;
+    if(n<=0){clearInterval(iv);$('countdown').style.display='none';runDrill()}
+    else{$('bigCount').textContent=n}
+  },800);
+}
+
+function runDrill(){
+  phase='running';idx=0;score=0;correctCount=0;
+  $('hScore').textContent='0';$('hLastMs').textContent='--';$('hLeft').textContent=TOTAL;
+  msg('GET READY...','go');
+  timers.push(setTimeout(function(){msg('','go');nextTrial()},900));
+}
+
+function nextTrial(){
+  if(phase!=='running')return;
+  currentSide=(Math.random()<0.5)?'left':'right';
+  var stageRect=stage.getBoundingClientRect();
+  var x = currentSide==='left' ? stageRect.width*0.25 : stageRect.width*0.75;
+  var y = stageRect.height*0.5;
+  stimulus.style.left=x+'px';
+  stimulus.style.top=y+'px';
+  stimulus.classList.add('visible');
+  shownAt=performance.now();
+}
+
+function handleChoice(side){
+  if(phase!=='running')return;
+  if(!stimulus.classList.contains('visible'))return;
+  if(tapLocked)return;
+  tapLocked=true;setTimeout(function(){tapLocked=false},40);
+
+  var rt=performance.now()-shownAt;
+  var isCorrect=(side===currentSide);
+  stimulus.classList.remove('visible');
+
+  var stageRect=stage.getBoundingClientRect();
+  var rx = side==='left' ? stageRect.left+stageRect.width*0.25 : stageRect.left+stageRect.width*0.75;
+  var ry = stageRect.top+stageRect.height*0.5;
+
+  idx++;
+
+  if(isCorrect){
+    correctCount++;
+    var pts=Math.max(1,Math.round(300-rt/4));
+    score+=pts;
+    ripple(rx,ry);flash('rgba(124,58,237,.14)');
+    $('hLastMs').textContent=Math.round(rt);
+    msg('✓ '+Math.round(rt)+' MS','correct');
+  }else{
+    flash('rgba(255,20,147,.28)');
+    msg('✗ WRONG SIDE!','wrong');
+  }
+
+  $('hScore').textContent=score;
+  $('hLeft').textContent=Math.max(0,TOTAL-idx);
+
+  if(idx>=TOTAL){
+    timers.push(setTimeout(endDrill,500));
+  }else{
+    timers.push(setTimeout(function(){
+      if(phase==='running')msg('','go');
+      nextTrial();
+    },PACE_MS));
+  }
+}
+
+$('btnLeft').addEventListener('pointerdown',function(e){e.preventDefault();handleChoice('left')});
+$('btnRight').addEventListener('pointerdown',function(e){e.preventDefault();handleChoice('right')});
+
+function endDrill(){
+  if(phase==='done')return;
+  phase='done';clrT();stimulus.classList.remove('visible');
+  var finalScore=score;
+  var accPct=idx>0?Math.round((correctCount/idx)*100):0;
+  var isNew=finalScore>best;
+  if(isNew){best=finalScore;saveBest()}
+  $('endNum').textContent=finalScore;
+  $('endAcc').textContent=correctCount+'/'+TOTAL+' correct · '+accPct+'% accuracy';
+  if(isNew&&finalScore>0){$('endHead').textContent='🎉 New Best!';$('endSub').textContent='You beat your record with '+finalScore+' points. Sharp choices!'}
+  else{$('endHead').textContent='Drill Complete!';$('endSub').textContent='Great choices. Next player, beat this number!'}
+
+  if(finalScore>sessionBest){
+    sessionBest=finalScore;
+  }
+  playersThisSession++;
+  $('sessionLine').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+' pts'):'');
+
+  $('screen-end').style.display='flex';
+}
+
+function nextPlayer(){
+  $('screen-end').style.display='none';
+  startDrill();
+}
+$('nextPlayerBtn').onclick=nextPlayer;
+
+loadBest();
+</script>
+</body>
+</html>
