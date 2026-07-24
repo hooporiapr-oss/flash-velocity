@@ -70,6 +70,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 #screen-end{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0a1a2e 0%,#000 70%);text-align:center;padding:20px}
 .final-num{font-size:6rem;font-weight:900;color:#00D9A5;line-height:1;text-shadow:0 0 60px rgba(0,217,165,.9)}
 .final-label{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:#9fb3c8;margin-top:10px}
+.final-bpm{margin-top:10px;font-size:1.8rem;color:#ffd35a;font-weight:900}
+.final-acc{margin-top:6px;font-size:1.1rem;color:#9fb3c8;font-weight:900}
 #screen-end h2{font-size:1.8rem;font-weight:900;margin:24px 0 8px}
 #endSub{font-size:.9rem;color:#9fb3c8;line-height:1.6;max-width:400px}
 .end-btns{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
@@ -99,13 +101,13 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <div id="target"><div id="target-inner"><span id="gng-score-num">0</span></div></div>
 
 <div id="controls">
-  <a class="ctrl-btn" href="/index.html">← Exit</a>
+  <a class="ctrl-btn" href="/vr-lab.html">← Exit</a>
   <button class="ctrl-btn" id="fsBtnGame">⛶ Full Court</button>
 </div>
 
 <!-- INTRO -->
 <div id="screen-intro">
-  <a class="intro-back" href="/index.html">← Exit</a>
+  <a class="intro-back" href="/vr-lab.html">← Exit</a>
   <button class="intro-fs" id="fsBtn">⛶ Fullscreen</button>
   <div class="vrr-logo">REACT<span>IFIC</span></div>
   <div class="vrr-sub">Reaction Challenges to the Beat of the Ritnome</div>
@@ -125,7 +127,9 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <!-- END -->
 <div id="screen-end">
   <div class="final-num" id="endNum">0</div>
-  <div class="final-label">Reds Caught</div>
+  <div class="final-label">Avg Reaction Time (ms)</div>
+  <div class="final-bpm" id="endBpm"></div>
+  <div class="final-acc" id="endScoreLine"></div>
   <h2 id="endHead">Drill Complete!</h2>
   <div id="endSub">Great focus. Play again and beat your number.</div>
   <div id="beatLine" style="margin-top:14px;font-size:1rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#FF1493;min-height:1.2em"></div>
@@ -176,6 +180,7 @@ var targetX=0,targetY=0,tapLocked=false;
 function loadBestForTempo(){
   best=0;
   try{best=parseInt(localStorage.getItem(BEST_KEY)||'0',10)||0}catch(e){}
+  try{bestAvgMs=parseInt(localStorage.getItem(BEST_KEY+'-ms')||'0',10)||0}catch(e){bestAvgMs=0}
   $('hBest').textContent=best;
   $('bestLine').innerHTML=best>0?('Your best on the '+BEAT_BPM+' Ritnome: <b>'+best+' taps</b>'):'';
   var token=localStorage.getItem('rct-token');
@@ -226,6 +231,7 @@ if(npb)npb.onclick=nextPlayer;
 })();
 
 function msg(t,c){var e=$('msg');e.textContent=t;e.className=c||'watch'}
+function bpmFromMs(v){return v?Math.round(60000/v):0}
 function clrT(){timers.forEach(clearTimeout);timers=[]}
 
 function startDrill(){
@@ -244,7 +250,7 @@ function startDrill(){
 }
 
 function runDrill(){
-  phase='running';taps=0;$('hTaps').textContent='0';misses=0;
+  phase='running';taps=0;$('hTaps').textContent='0';misses=0;totalRT=0;rtCount=0;
   var startMsg = CENTERED ? 'TAP ONLY ON RED!' : 'MOVE & TAP ONLY ON RED!';
   msg(startMsg,'go');
   timers.push(setTimeout(function(){msg('','go')},1600));
@@ -295,7 +301,7 @@ var GNG_NONRED=[
   {name:'purple',c:'#a855f7', g:'rgba(168,85,247,1)'}
 ];
 var RED_COLOR={name:'red',c:'#ff1e3c',g:'rgba(255,30,60,1)',red:true};
-var gngTimer=null, gngIsRed=false, misses=0, redsSeen=0;
+var gngTimer=null, gngIsRed=false, misses=0, redsSeen=0, redOnsetAt=0, totalRT=0, rtCount=0, bestAvgMs=0;
 
 // Red appears on a fully random, wandering chance — no fixed 1-in-N rate a kid
 // could count. Red may repeat, cluster, or go quiet. Truly unpredictable.
@@ -342,6 +348,7 @@ function gngCycle(){
   gngIsRed=!!col.red;
   gngRender(col);
   if(gngIsRed){
+    redOnsetAt=performance.now();
     redsSeen++;
     $('hReds')&&($('hReds').textContent=redsSeen);
     if(redsSeen>=TOTAL_REDS){        // 100 reds have appeared — end after this one shows briefly
@@ -361,6 +368,8 @@ function handleTap(){
     var sn=$('gng-score-num');
     if(gngIsRed){
       // GO — correct hit on red. Any red tap clears a hidden negative back to 0 first.
+      var rt=performance.now()-redOnsetAt;
+      totalRT+=rt;rtCount++;
       if(taps<0)taps=0;
       taps++;
       $('hTaps').textContent=Math.max(0,taps);
@@ -369,6 +378,8 @@ function handleTap(){
       setTimeout(function(){sn.style.transform='scale(1)';sn.style.color='#fff'},140);
       ripple(targetX,targetY);flash();
       gngIsRed=false;               // consume this red so you can't double-tap the same flash
+      msg(Math.round(rt)+' MS · '+bpmFromMs(rt)+' BPM','go');
+      timers.push(setTimeout(function(){if(phase==='running')msg('','go')},450));
     }else{
       // NO-GO violation — tapped a non-red → penalty
       misses++;
@@ -415,26 +426,33 @@ function endDrill(){
   phase='done';clrT();stopBeat();stopReaction();stopGoNoGo();hideTarget();
   var gs=$('gng-score-num');if(gs)gs.classList.remove('on');
   var finalScore=Math.max(0,taps);        // never save or show a negative
-  var isNew=finalScore>best;
-  if(isNew){best=finalScore;try{localStorage.setItem(BEST_KEY,String(best))}catch(e){}}
+  var avgRT=rtCount?Math.round(totalRT/rtCount):0;
+  var isNewPts=finalScore>best;
+  var isNewMs=avgRT>0&&(bestAvgMs===0||avgRT<bestAvgMs);
+  if(isNewPts){best=finalScore;try{localStorage.setItem(BEST_KEY,String(best))}catch(e){}}
+  if(isNewMs){bestAvgMs=avgRT;try{localStorage.setItem(BEST_KEY+'-ms',String(bestAvgMs))}catch(e){}}
   submitScore(finalScore);
-  $('endNum').textContent=finalScore;
-  if(isNew&&finalScore>0){$('endHead').textContent='🎉 New Best!';$('endSub').textContent='You beat your record with '+finalScore+' reds. Amazing focus!'}
+
+  $('endNum').textContent=avgRT;
+  $('endBpm').textContent=avgRT?(bpmFromMs(avgRT)+' BPM'):'--';
+  $('endScoreLine').textContent=finalScore+' reds caught';
+
+  if(isNewMs&&avgRT>0){$('endHead').textContent='🎉 New Best!';$('endSub').textContent='Your fastest average yet — '+avgRT+'ms. Amazing focus!'}
   else{$('endHead').textContent='Drill Complete!';$('endSub').textContent='Great focus. Next player, beat this number!'}
 
   // ── CLASS / PROMETHEON FLOW ──
-  // Track the top score this session (the number the class is chasing on the board).
-  if(finalScore>sessionBest){
-    sessionBest=finalScore;sessionBestBy=finalScore;
-    $('beatLine').textContent='🏆 Top score to beat: '+finalScore;
+  // Track the fastest average reaction time this session (the number the class is chasing).
+  if(avgRT>0&&(sessionBest===0||avgRT<sessionBest)){
+    sessionBest=avgRT;
+    $('beatLine').textContent='🏆 Fastest to beat: '+avgRT+'ms';
   }else if(sessionBest>0){
-    var gap=sessionBest-finalScore;
-    $('beatLine').textContent=(gap===0)?'🔥 Tied the top score!':('Top score to beat: '+sessionBest+'  ('+gap+' away)');
+    var gap=avgRT-sessionBest;
+    $('beatLine').textContent=(gap<=0)?'🔥 Tied the fastest!':('Fastest to beat: '+sessionBest+'ms  ('+gap+'ms slower)');
   }else{
     $('beatLine').textContent='';
   }
   playersThisSession++;
-  $('sessionBest').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+' reds'):'');
+  $('sessionBest').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+'ms'):'');
 
   $('screen-end').style.display='flex';
 }
