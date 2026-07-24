@@ -22,7 +22,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 #msg.watch{color:#7c3aed}#msg.go{color:#ffd35a}#msg.correct{color:#00D9A5}#msg.wrong{color:#FF1493}
 
 /* stimulus stage — left half vs right half of the play area */
-#stage{position:fixed;top:14%;bottom:22%;left:0;right:0;z-index:12}
+#stage{position:fixed;top:10%;bottom:34%;left:0;right:0;z-index:12}
 #stimulus{
   position:absolute;top:50%;width:110px;height:110px;border-radius:50%;
   transform:translate(-50%,-50%) scale(0);
@@ -37,11 +37,17 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 @keyframes rippleOut{0%{transform:translate(-50%,-50%) scale(.5);opacity:1}100%{transform:translate(-50%,-50%) scale(2.4);opacity:0}}
 
 /* choice buttons — big, spatially matched left/right */
-#choices{position:fixed;bottom:88px;left:0;right:0;z-index:20;display:flex;gap:14px;padding:0 20px}
-.choice-btn{flex:1;height:120px;border:3px solid rgba(124,58,237,.5);background:rgba(124,58,237,.08);border-radius:20px;color:#fff;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .08s}
-.choice-btn .arrow-glyph{font-size:2.6rem;line-height:1}
-.choice-btn .arrow-word{font-size:.7rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#c4b5fd}
-.choice-btn:active{background:rgba(124,58,237,.35);transform:scale(.97)}
+#choices{
+  position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:20;
+  display:grid;grid-template-columns:88px 88px 88px;grid-template-rows:76px 76px 76px;gap:8px;
+}
+.choice-btn{border:3px solid rgba(124,58,237,.5);background:rgba(124,58,237,.08);border-radius:16px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .08s}
+.choice-btn .arrow-glyph{font-size:1.9rem;line-height:1}
+.choice-btn:active{background:rgba(124,58,237,.35);transform:scale(.94)}
+#btnUp{grid-column:2;grid-row:1}
+#btnLeft{grid-column:1;grid-row:2}
+#btnRight{grid-column:3;grid-row:2}
+#btnDown{grid-column:2;grid-row:3}
 
 #controls{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;justify-content:center;gap:10px;padding:8px 16px 10px;background:linear-gradient(0deg,rgba(0,0,0,.9),transparent)}
 .ctrl-btn{height:40px;flex:0 1 170px;max-width:200px;border:2px solid rgba(124,58,237,.5);background:rgba(0,0,0,.4);border-radius:10px;color:#fff;font-size:.85rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
@@ -71,7 +77,10 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 
 #countdown{position:fixed;inset:0;z-index:56;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0a0818 0%,#000 70%)}
 #bigCount{font-size:8rem;font-weight:900;color:#7c3aed;text-shadow:0 0 60px rgba(124,58,237,.9)}
-@media(max-width:420px){.vrr-logo{font-size:2rem}.big-btn{height:60px;font-size:1.1rem}.choice-btn{height:96px;font-size:1.1rem}}
+@media(max-width:420px){.vrr-logo{font-size:2rem}.big-btn{height:60px;font-size:1.1rem}
+  #choices{grid-template-columns:70px 70px 70px;grid-template-rows:62px 62px 62px;gap:6px}
+  .choice-btn .arrow-glyph{font-size:1.5rem}
+}
 </style>
 </head>
 <body>
@@ -120,8 +129,10 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <div id="stage"><div id="stimulus"></div></div>
 
 <div id="choices">
-  <button class="choice-btn" id="btnLeft" data-side="left"><span class="arrow-glyph">◀</span><span class="arrow-word">Left</span></button>
-  <button class="choice-btn" id="btnRight" data-side="right"><span class="arrow-glyph">▶</span><span class="arrow-word">Right</span></button>
+  <button class="choice-btn" id="btnUp" data-dir="up"><span class="arrow-glyph">▲</span></button>
+  <button class="choice-btn" id="btnLeft" data-dir="left"><span class="arrow-glyph">◀</span></button>
+  <button class="choice-btn" id="btnRight" data-dir="right"><span class="arrow-glyph">▶</span></button>
+  <button class="choice-btn" id="btnDown" data-dir="down"><span class="arrow-glyph">▼</span></button>
 </div>
 
 <div id="controls">
@@ -135,7 +146,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   <button class="intro-fs" id="fsBtn">⛶ Fullscreen</button>
   <div class="vrr-logo">CHOICE <span>REACTION</span></div>
   <div class="vrr-sub">Left or Right · To The Beat</div>
-  <div class="rule-t"><b>50 rounds.</b> A dot wanders the screen carrying an arrow &mdash; <b>&#9664;</b> or <b>&#9654;</b>. Read the arrow, not the position, and tap the matching button as fast as you can. No deadline — just how fast, and how right, you are.</div>
+  <div class="rule-t"><b>50 rounds.</b> A dot wanders the screen carrying an arrow &mdash; <b>&#9664; &#9654; &#9650; &#9660;</b>. Read the arrow, not the position, and tap the matching direction as fast as you can. No deadline — just how fast, and how right, you are.</div>
   <button class="big-btn" id="bigStart" onclick="startDrill()">▶ START</button>
   <div class="best-line" id="bestLine"></div>
 </div>
@@ -223,10 +234,13 @@ function randomStagePos(){
   return {x:x,y:y};
 }
 
+var ARROWS={left:'◀',right:'▶',up:'▲',down:'▼'};
+var DIRS=['left','right','up','down'];
+
 function nextTrial(){
   if(phase!=='running')return;
-  currentSide=(Math.random()<0.5)?'left':'right';
-  stimulus.textContent=currentSide==='left'?'◀':'▶';
+  currentSide=DIRS[Math.floor(Math.random()*DIRS.length)];
+  stimulus.textContent=ARROWS[currentSide];
   var pos=randomStagePos();
   stimulus.style.left=pos.x+'px';
   stimulus.style.top=pos.y+'px';
@@ -269,7 +283,7 @@ function handleChoice(side){
     msg('✓ '+Math.round(rt)+' MS','correct');
   }else{
     flash('rgba(255,20,147,.28)');
-    msg('✗ WRONG SIDE!','wrong');
+    msg('✗ WRONG DIRECTION!','wrong');
   }
 
   $('hScore').textContent=score;
@@ -285,6 +299,8 @@ function handleChoice(side){
   }
 }
 
+$('btnUp').addEventListener('pointerdown',function(e){e.preventDefault();handleChoice('up')});
+$('btnDown').addEventListener('pointerdown',function(e){e.preventDefault();handleChoice('down')});
 $('btnLeft').addEventListener('pointerdown',function(e){e.preventDefault();handleChoice('left')});
 $('btnRight').addEventListener('pointerdown',function(e){e.preventDefault();handleChoice('right')});
 
