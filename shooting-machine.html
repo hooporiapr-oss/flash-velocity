@@ -325,12 +325,15 @@ var machine={
   repsAtSpot:0,
   spotStats:[],
   pulse:0,
-  phase:"idle",       // "idle" | "catching" | "shooting"
+  phase:"idle",       // "idle" | "catching" | "shooting" | "flying"
   ballStartAt:0,
   caughtAt:0,
   ballX:0,
   ballY:0,
-  ballProgress:0
+  ballProgress:0,
+  flightStartAt:0,
+  pendingMade:false,
+  pendingHitRim:false
 };
 function resetMachineSpotStats(){
   machine.spotStats=[0,0,0,0,0].map(function(){return{makes:0,attempts:0};});
@@ -338,8 +341,9 @@ function resetMachineSpotStats(){
 
 var selectedMachineBpm=80;
 function machineBeatMs(){return 60000/selectedMachineBpm;}
-var MACHINE_BALL_TRAVEL_MS=520;
-var MACHINE_PASS_ORIGIN_Y_FRAC=.92;
+var MACHINE_FLIGHT_MS=340;
+var MACHINE_CATCH_X_FRAC=.5;
+var MACHINE_CATCH_Y_FRAC=.66;
 
 function selectMachineBpm(value){
   value=parseInt(value,10);
@@ -661,29 +665,24 @@ function machineRimHitRadius(){
   return Math.max(18,hoop.rx*.42);
 }
 
-function updateMachineBallPosition(t){
-  var spot=MACHINE_SPOTS[machine.spotIndex];
-  var originX=W*.5;
-  var originY=H*MACHINE_PASS_ORIGIN_Y_FRAC;
-  var progress=Math.max(0,Math.min(1,(t-machine.ballStartAt)/MACHINE_BALL_TRAVEL_MS));
-  var eased=1-Math.pow(1-progress,2); // ease-out, matches a real pass slowing into the hands
-  machine.ballX=originX+(spot.x-originX)*eased;
-  machine.ballY=originY+(spot.y-originY)*eased;
-  machine.ballProgress=progress;
+function machineCatchPoint(){
+  return{x:W*MACHINE_CATCH_X_FRAC,y:H*MACHINE_CATCH_Y_FRAC};
 }
 
 function showMachineTarget(t){
   var spot=MACHINE_SPOTS[machine.spotIndex];
+  var catchPt=machineCatchPoint();
   hoop.x=spot.x;
   hoop.y=spot.y;
   machine.visible=true;
   machine.phase="catching";
   machine.appearedAt=t;
-  machine.ballStartAt=t;
+  machine.ballX=catchPt.x;
+  machine.ballY=catchPt.y;
+  machine.ballProgress=1;
   machine.pulse=Math.random()*Math.PI*2;
-  updateMachineBallPosition(t);
   attempts++;
-  setMessage(spot.label+" — incoming pass, catch it!");
+  setMessage(spot.label+" — catch it!");
   updateHud(t);
 }
 
@@ -709,52 +708,68 @@ function handleMachineClick(x,y){
     var elapsed=t-machine.caughtAt;
     var hitRim=distance(x,y,hoop.x,hoop.y)<=machineRimHitRadius();
     var inTime=elapsed<=machineBeatMs();
-    var made=hitRim&&inTime;
 
-    var s=machine.spotStats[machine.spotIndex];
-    s.attempts++;
-    machine.visible=false;
+    machine.pendingMade=hitRim&&inTime;
+    machine.pendingHitRim=hitRim;
+    machine.pendingElapsed=elapsed;
+    machine.phase="flying";
+    machine.flightStartAt=t;
+    var catchPt=machineCatchPoint();
+    machine.ballX=catchPt.x;
+    machine.ballY=catchPt.y;
+    setMessage(MACHINE_SPOTS[machine.spotIndex].label+" — shot away!");
+  }
+}
 
-    clickMarker.x=x;
-    clickMarker.y=y;
-    clickMarker.until=t+360;
-    clickMarker.success=made;
+function resolveMachineShot(t){
+  var made=machine.pendingMade;
+  var hitRim=machine.pendingHitRim;
+  var elapsed=machine.pendingElapsed;
 
-    if(made){
-      s.makes++;
-      score++;
-      streak++;
-      if(streak>bestStreak){bestStreak=streak;}
-      totalReaction+=elapsed;
-      reactionCount++;
-      if(!fastestReaction||elapsed<fastestReaction){fastestReaction=elapsed;}
-      resultText="MADE IT";
-      resultUntil=t+520;
-      createParticles(hoop.x,hoop.y,true);
-      beep(true);
-    }else{
-      streak=0;
-      resultText=hitRim?"TOO SLOW":"MISSED RIM";
-      resultUntil=t+520;
-      createParticles(x,y,false);
-      beep(false);
-      setMessage(hitRim?"Good aim, but too slow off the catch.":"Missed the rim.");
-    }
+  var s=machine.spotStats[machine.spotIndex];
+  s.attempts++;
+  machine.visible=false;
 
-    machine.repsAtSpot++;
-    if(machine.repsAtSpot>=REPS_PER_SPOT){
-      machine.repsAtSpot=0;
-      machine.spotIndex=(machine.spotIndex+1)%MACHINE_SPOTS.length;
-    }
+  clickMarker.x=hoop.x;
+  clickMarker.y=hoop.y;
+  clickMarker.until=t+360;
+  clickMarker.success=made;
 
-    updateHud(t);
+  if(made){
+    s.makes++;
+    score++;
+    streak++;
+    if(streak>bestStreak){bestStreak=streak;}
+    totalReaction+=elapsed;
+    reactionCount++;
+    if(!fastestReaction||elapsed<fastestReaction){fastestReaction=elapsed;}
+    resultText="MADE IT";
+    resultUntil=t+520;
+    createParticles(hoop.x,hoop.y,true);
+    beep(true);
+    setMessage("Nothing but net!");
+  }else{
+    streak=0;
+    resultText=hitRim?"TOO SLOW":"MISSED RIM";
+    resultUntil=t+520;
+    createParticles(hoop.x,hoop.y,false);
+    beep(false);
+    setMessage(hitRim?"Good aim, but too slow off the catch.":"Missed the rim.");
+  }
 
-    if(attempts>=MACHINE_TOTAL_SHOTS){
-      setTimeout(finishRound,400);
-    }else{
-      machine.phase="idle";
-      machine.nextAt=t+MACHINE_PACE_MS;
-    }
+  machine.repsAtSpot++;
+  if(machine.repsAtSpot>=REPS_PER_SPOT){
+    machine.repsAtSpot=0;
+    machine.spotIndex=(machine.spotIndex+1)%MACHINE_SPOTS.length;
+  }
+
+  updateHud(t);
+
+  machine.phase="idle";
+  if(attempts>=MACHINE_TOTAL_SHOTS){
+    setTimeout(finishRound,400);
+  }else{
+    machine.nextAt=t+MACHINE_PACE_MS;
   }
 }
 
@@ -762,8 +777,16 @@ function updateMachine(t){
   if(selectedMode!=="machine"||!gameRunning||!roundStarted){return;}
   if(machine.phase==="idle"&&t>=machine.nextAt&&attempts<MACHINE_TOTAL_SHOTS){
     showMachineTarget(t);
-  }else if(machine.phase==="catching"){
-    updateMachineBallPosition(t);
+  }else if(machine.phase==="flying"){
+    var catchPt=machineCatchPoint();
+    var progress=Math.max(0,Math.min(1,(t-machine.flightStartAt)/MACHINE_FLIGHT_MS));
+    var eased=progress*progress; // ease-in, matches a shot accelerating away from the hands
+    machine.ballX=catchPt.x+(hoop.x-catchPt.x)*eased;
+    machine.ballY=catchPt.y+(hoop.y-catchPt.y)*eased;
+    machine.ballProgress=1-progress*.4; // ball shrinks slightly as it travels away from camera
+    if(progress>=1){
+      resolveMachineShot(t);
+    }
   }
 }
 
@@ -883,6 +906,9 @@ function startRound(e){
   machine.phase="idle";
   machine.ballStartAt=0;
   machine.caughtAt=0;
+  machine.flightStartAt=0;
+  machine.pendingMade=false;
+  machine.pendingHitRim=false;
   resetMachineSpotStats();
 
   gameRunning=true;
@@ -1172,7 +1198,7 @@ function frame(t){
   if(machine.visible){
     drawBackboardAndRim(t,true);
   }
-  if(machine.visible&&machine.phase==="catching"){
+  if(machine.visible&&(machine.phase==="catching"||machine.phase==="flying")){
     drawMachineBall(t);
   }
 
