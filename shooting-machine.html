@@ -215,7 +215,17 @@ select,input{
 
         <div class="section" id="modeSection">
           <div class="sectionTitle">Shooting Machine</div>
-          <div id="modeInfo">5 shots from each of 5 spots around the arc — corner, wing, top, wing, corner — cycling continuously like a real shooting machine.</div>
+          <div id="modeInfo">Catch the pass, then shoot. 5 shots from each of 5 spots around the arc — corner, wing, top, wing, corner — cycling continuously.</div>
+        </div>
+
+        <div class="section" id="machineOptions">
+          <div class="sectionTitle">Shot clock</div>
+          <div class="choiceGrid">
+            <button class="choiceBtn" data-machinebpm="60" type="button">60 BPM</button>
+            <button class="choiceBtn active" data-machinebpm="80" type="button">80 BPM</button>
+            <button class="choiceBtn" data-machinebpm="100" type="button">100 BPM</button>
+          </div>
+          <div id="machineInfo"></div>
         </div>
       </div>
     </div>
@@ -248,6 +258,7 @@ var deleteProfileBtn=document.getElementById("deleteProfileBtn");
 var profileStats=document.getElementById("profileStats");
 
 var modeInfo=document.getElementById("modeInfo");
+var machineInfo=document.getElementById("machineInfo");
 var shotInfo=document.getElementById("shotInfo");
 
 var hudPlayer=document.getElementById("hudPlayer");
@@ -313,10 +324,34 @@ var machine={
   spotIndex:0,
   repsAtSpot:0,
   spotStats:[],
-  pulse:0
+  pulse:0,
+  phase:"idle",       // "idle" | "catching" | "shooting"
+  ballStartAt:0,
+  caughtAt:0,
+  ballX:0,
+  ballY:0,
+  ballProgress:0
 };
 function resetMachineSpotStats(){
   machine.spotStats=[0,0,0,0,0].map(function(){return{makes:0,attempts:0};});
+}
+
+var selectedMachineBpm=80;
+function machineBeatMs(){return 60000/selectedMachineBpm;}
+var MACHINE_BALL_TRAVEL_MS=520;
+var MACHINE_PASS_ORIGIN_Y_FRAC=.92;
+
+function selectMachineBpm(value){
+  value=parseInt(value,10);
+  if(value!==60&&value!==80&&value!==100){value=80;}
+  selectedMachineBpm=value;
+  setActiveButtons("[data-machinebpm]","data-machinebpm",String(value));
+  updateMachineInfo();
+}
+
+function updateMachineInfo(){
+  machineInfo.textContent=
+    "Catch the ball, then release within "+Math.round(machineBeatMs())+" ms to make it — even a dead-on shot misses if you're too slow.";
 }
 resetMachineSpotStats();
 
@@ -610,76 +645,164 @@ function chooseDynamicPosition(){
 }
 
 // ── SHOOTING MACHINE — 5 fixed spots around the arc, 5 shots each,
-//    cycling continuously. No waiting window, no miss-timer: the rim
-//    just waits at the current spot until tapped, matching how a real
-//    shooting machine keeps feeding until you take the shot.
+//    cycling continuously. A ball is passed in — catch it, then release
+//    the shot at the rim within the shot-clock window for that BPM.
+//    Missing the window is a miss even on a dead-on rim tap; missing the
+//    rim is a miss even with perfect timing.
 var MACHINE_PACE_MS=550;
 var MACHINE_TOTAL_SHOTS=REPS_PER_SPOT*5*3; // 3 full cycles through all 5 spots
+var MACHINE_BALL_HIT_RADIUS_MIN=22;
+
+function machineBallHitRadius(){
+  return Math.max(MACHINE_BALL_HIT_RADIUS_MIN,hoop.rx*.5);
+}
+
+function machineRimHitRadius(){
+  return Math.max(18,hoop.rx*.42);
+}
+
+function updateMachineBallPosition(t){
+  var spot=MACHINE_SPOTS[machine.spotIndex];
+  var originX=W*.5;
+  var originY=H*MACHINE_PASS_ORIGIN_Y_FRAC;
+  var progress=Math.max(0,Math.min(1,(t-machine.ballStartAt)/MACHINE_BALL_TRAVEL_MS));
+  var eased=1-Math.pow(1-progress,2); // ease-out, matches a real pass slowing into the hands
+  machine.ballX=originX+(spot.x-originX)*eased;
+  machine.ballY=originY+(spot.y-originY)*eased;
+  machine.ballProgress=progress;
+}
 
 function showMachineTarget(t){
   var spot=MACHINE_SPOTS[machine.spotIndex];
   hoop.x=spot.x;
   hoop.y=spot.y;
   machine.visible=true;
+  machine.phase="catching";
   machine.appearedAt=t;
+  machine.ballStartAt=t;
   machine.pulse=Math.random()*Math.PI*2;
+  updateMachineBallPosition(t);
   attempts++;
-  setMessage(spot.label+" — shot "+(machine.repsAtSpot+1)+" of "+REPS_PER_SPOT);
+  setMessage(spot.label+" — incoming pass, catch it!");
   updateHud(t);
 }
 
 function handleMachineClick(x,y){
   if(selectedMode!=="machine"||!gameRunning||!roundStarted||!acceptingInput||!machine.visible||machine.tapLocked){return;}
 
-  var hitRadius=Math.max(18,hoop.rx*.42);
-  if(distance(x,y,hoop.x,hoop.y)>hitRadius){return;}
-
   var t=now();
-  machine.tapLocked=true;
-  setTimeout(function(){machine.tapLocked=false;},40);
 
-  var reaction=t-machine.appearedAt;
-  machine.visible=false;
-
-  var s=machine.spotStats[machine.spotIndex];
-  s.attempts++;
-  s.makes++;
-  score++;
-  streak++;
-  if(streak>bestStreak){bestStreak=streak;}
-  totalReaction+=reaction;
-  reactionCount++;
-  if(!fastestReaction||reaction<fastestReaction){fastestReaction=reaction;}
-
-  clickMarker.x=x;
-  clickMarker.y=y;
-  clickMarker.until=t+360;
-  clickMarker.success=true;
-  resultText="MADE IT";
-  resultUntil=t+520;
-  createParticles(hoop.x,hoop.y,true);
-  beep(true);
-
-  machine.repsAtSpot++;
-  if(machine.repsAtSpot>=REPS_PER_SPOT){
-    machine.repsAtSpot=0;
-    machine.spotIndex=(machine.spotIndex+1)%MACHINE_SPOTS.length;
+  if(machine.phase==="catching"){
+    if(distance(x,y,machine.ballX,machine.ballY)>machineBallHitRadius()){return;}
+    machine.tapLocked=true;
+    setTimeout(function(){machine.tapLocked=false;},40);
+    machine.phase="shooting";
+    machine.caughtAt=t;
+    setMessage(MACHINE_SPOTS[machine.spotIndex].label+" — shoot!");
+    return;
   }
 
-  updateHud(t);
+  if(machine.phase==="shooting"){
+    machine.tapLocked=true;
+    setTimeout(function(){machine.tapLocked=false;},40);
 
-  if(attempts>=MACHINE_TOTAL_SHOTS){
-    setTimeout(finishRound,400);
-  }else{
-    machine.nextAt=t+MACHINE_PACE_MS;
+    var elapsed=t-machine.caughtAt;
+    var hitRim=distance(x,y,hoop.x,hoop.y)<=machineRimHitRadius();
+    var inTime=elapsed<=machineBeatMs();
+    var made=hitRim&&inTime;
+
+    var s=machine.spotStats[machine.spotIndex];
+    s.attempts++;
+    machine.visible=false;
+
+    clickMarker.x=x;
+    clickMarker.y=y;
+    clickMarker.until=t+360;
+    clickMarker.success=made;
+
+    if(made){
+      s.makes++;
+      score++;
+      streak++;
+      if(streak>bestStreak){bestStreak=streak;}
+      totalReaction+=elapsed;
+      reactionCount++;
+      if(!fastestReaction||elapsed<fastestReaction){fastestReaction=elapsed;}
+      resultText="MADE IT";
+      resultUntil=t+520;
+      createParticles(hoop.x,hoop.y,true);
+      beep(true);
+    }else{
+      streak=0;
+      resultText=hitRim?"TOO SLOW":"MISSED RIM";
+      resultUntil=t+520;
+      createParticles(x,y,false);
+      beep(false);
+      setMessage(hitRim?"Good aim, but too slow off the catch.":"Missed the rim.");
+    }
+
+    machine.repsAtSpot++;
+    if(machine.repsAtSpot>=REPS_PER_SPOT){
+      machine.repsAtSpot=0;
+      machine.spotIndex=(machine.spotIndex+1)%MACHINE_SPOTS.length;
+    }
+
+    updateHud(t);
+
+    if(attempts>=MACHINE_TOTAL_SHOTS){
+      setTimeout(finishRound,400);
+    }else{
+      machine.phase="idle";
+      machine.nextAt=t+MACHINE_PACE_MS;
+    }
   }
 }
 
 function updateMachine(t){
   if(selectedMode!=="machine"||!gameRunning||!roundStarted){return;}
-  if(!machine.visible&&t>=machine.nextAt&&attempts<MACHINE_TOTAL_SHOTS){
+  if(machine.phase==="idle"&&t>=machine.nextAt&&attempts<MACHINE_TOTAL_SHOTS){
     showMachineTarget(t);
+  }else if(machine.phase==="catching"){
+    updateMachineBallPosition(t);
   }
+}
+
+function drawMachineBall(t){
+  var scale=.45+.55*machine.ballProgress;
+  var r=Math.max(10,hoop.rx*.5)*scale;
+  var x=machine.ballX;
+  var y=machine.ballY;
+
+  ctx.save();
+  ctx.globalAlpha=.55+.45*machine.ballProgress;
+
+  var grad=ctx.createRadialGradient(x-r*.3,y-r*.35,r*.1,x,y,r);
+  grad.addColorStop(0,"#ffb052");
+  grad.addColorStop(.55,"#f37418");
+  grad.addColorStop(1,"#c95a10");
+  ctx.fillStyle=grad;
+  ctx.beginPath();
+  ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fill();
+
+  ctx.strokeStyle="rgba(30,15,5,.75)";
+  ctx.lineWidth=Math.max(1.5,r*.07);
+  ctx.beginPath();
+  ctx.moveTo(x-r,y);
+  ctx.lineTo(x+r,y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x,y-r);
+  ctx.lineTo(x,y+r);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x,y,r*.72,Math.PI*.18,Math.PI*.82);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x,y,r*.72,Math.PI*1.18,Math.PI*1.82);
+  ctx.stroke();
+
+  ctx.restore();
 }
 
 function createParticles(x,y,success){
@@ -757,6 +880,9 @@ function startRound(e){
   machine.tapLocked=false;
   machine.spotIndex=0;
   machine.repsAtSpot=0;
+  machine.phase="idle";
+  machine.ballStartAt=0;
+  machine.caughtAt=0;
   resetMachineSpotStats();
 
   gameRunning=true;
@@ -867,6 +993,7 @@ function returnToSelection(e){
   roundStarted=false;
   acceptingInput=false;
   machine.visible=false;
+  machine.phase="idle";
   particles=[];
   resultText="";
   clickMarker.until=0;
@@ -1045,6 +1172,9 @@ function frame(t){
   if(machine.visible){
     drawBackboardAndRim(t,true);
   }
+  if(machine.visible&&machine.phase==="catching"){
+    drawMachineBall(t);
+  }
 
   drawClickMarker(t);
   updateParticles(t);
@@ -1077,6 +1207,13 @@ newProfileName.addEventListener("keydown",function(e){
 
 var i;
 
+var machineBpmButtons=document.querySelectorAll("[data-machinebpm]");
+for(i=0;i<machineBpmButtons.length;i++){
+  machineBpmButtons[i].addEventListener("click",function(){
+    selectMachineBpm(this.getAttribute("data-machinebpm"));
+  },false);
+}
+
 startBtn.addEventListener("click",startRound,false);
 backBtn.addEventListener("click",returnToSelection,false);
 backBtn.addEventListener("touchstart",returnToSelection,false);
@@ -1090,6 +1227,7 @@ window.addEventListener("resize",resize,false);
 activeProfile=profiles.active||"Guest";
 resize();
 refreshProfiles();
+selectMachineBpm(80);
 selectMode("machine");
 updateHud();
 window.requestAnimationFrame(frame);
