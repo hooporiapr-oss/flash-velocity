@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>FlashFind | Hooporia</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;font-family:Arial,sans-serif;color:#fff;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+
+#screen-intro{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,#140800 0%,#000 70%);z-index:100;
+  overflow-y:auto;overflow-x:hidden;padding:20px 16px 24px;
+}
+.vrr-logo{font-size:2.4rem;font-weight:900;font-style:italic;letter-spacing:.1em;text-transform:uppercase;text-align:center;line-height:1;color:#fff;text-shadow:0 0 60px rgba(255,107,53,1);margin-bottom:8px}
+.vrr-logo span{color:#FF6B35}
+.vrr-sub{font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#FF6B35;margin-bottom:20px;text-align:center}
+.intro-info{font-size:.75rem;color:#8892a0;letter-spacing:.06em;text-align:center;line-height:1.9;width:100%;max-width:420px;margin-bottom:28px}
+.intro-info strong{color:#ffd35a}
+.big-btn{width:100%;max-width:420px;height:68px;border:none;border-radius:20px;background:linear-gradient(135deg,#FF6B35,#ff8a5c);color:#fff;font-size:1.2rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(255,107,53,.7)}
+.big-btn:hover{transform:scale(1.03)}
+.intro-back{position:fixed;top:16px;left:16px;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:120;text-decoration:none}
+
+@media (max-width:420px){
+  .vrr-logo{font-size:1.8rem}
+  .vrr-sub{font-size:.62rem}
+  .intro-info{font-size:.66rem}
+  .big-btn{height:56px;font-size:1rem}
+}
+
+#screen-game{
+  position:fixed;inset:0;display:none;flex-direction:column;
+  background:radial-gradient(circle at 16% 5%,rgba(255,107,53,.15),transparent 30%),linear-gradient(180deg,#0a0300,#050100);
+}
+.topbar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:6px 10px 4px;flex-shrink:0}
+.top-box{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;padding:4px 6px;background:rgba(0,0,0,.4);border:2px solid rgba(255,107,53,.3)}
+.top-label{font-size:.5rem;color:#FF6B35;font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin-bottom:1px}
+.top-val{font-size:1.3rem;font-weight:900;line-height:1;color:#fff}
+
+.clockbar{height:6px;background:rgba(255,255,255,.08);flex-shrink:0;overflow:hidden}
+.clockbar-fill{height:100%;background:linear-gradient(90deg,#FF6B35,#ffd35a);transition:width .1s linear}
+.msg-bar{text-align:center;font-size:1.1rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;min-height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:0 10px}
+.msg-bar.watch{color:#ffd35a}.msg-bar.go{color:#FF6B35}.msg-bar.perfect{color:#00D9A5}.msg-bar.miss{color:#FF1493}
+
+.court-area{flex:1;display:flex;align-items:center;justify-content:center;padding:4px 8px;min-height:0}
+.court{
+  display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(5,1fr);gap:4px;
+  border:2px solid rgba(255,149,0,.4);border-radius:14px;padding:6px;background-color:#2b1810;
+  background-image:url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%20200%20100%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%20%20%3Crect%20width%3D%22200%22%20height%3D%22100%22%20fill%3D%22%233a1c0b%22/%3E%0A%20%20%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%22198%22%20height%3D%2298%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Cline%20x1%3D%22100%22%20y1%3D%221%22%20x2%3D%22100%22%20y2%3D%2299%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Ccircle%20cx%3D%22100%22%20cy%3D%2250%22%20r%3D%2213%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Crect%20x%3D%221%22%20y%3D%2231%22%20width%3D%2238%22%20height%3D%2238%22%20fill%3D%22rgba%28255%2C107%2C0%2C.08%29%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Ccircle%20cx%3D%2239%22%20cy%3D%2250%22%20r%3D%2213%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Cpath%20d%3D%22M%201%2C10%20A%2084%2C84%200%200%2C1%2061%2C50%20A%2084%2C84%200%200%2C1%201%2C90%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.3%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Crect%20x%3D%22161%22%20y%3D%2231%22%20width%3D%2238%22%20height%3D%2238%22%20fill%3D%22rgba%28255%2C107%2C0%2C.08%29%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Ccircle%20cx%3D%22161%22%20cy%3D%2250%22%20r%3D%2213%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.35%29%22%20stroke-width%3D%221.5%22/%3E%0A%20%20%3Cpath%20d%3D%22M%20199%2C10%20A%2084%2C84%200%200%2C0%20139%2C50%20A%2084%2C84%200%200%2C0%20199%2C90%22%20fill%3D%22none%22%20stroke%3D%22rgba%28255%2C178%2C116%2C.3%29%22%20stroke-width%3D%221.5%22/%3E%0A%3C/svg%3E%0A');
+  background-size:100% 100%;box-shadow:0 0 60px rgba(255,149,0,.25),inset 0 0 40px rgba(255,149,0,.05),0 20px 60px rgba(0,0,0,.8)}
+.cell{border-radius:8px;background:rgba(255,149,0,.05);border:2px solid rgba(255,149,0,.28);display:flex;align-items:center;justify-content:center;font-size:clamp(1.1rem,3vw,2.4rem);font-weight:900;color:transparent;cursor:pointer;transition:all .08s}
+.cell.lit{background:#FF6B35!important;border-color:#ffd35a!important;box-shadow:0 0 20px rgba(255,107,53,.9)!important;color:#fff!important;transform:scale(1.05)}
+.cell.correct{background:#00D9A5!important;border-color:#00D9A5!important;box-shadow:0 0 16px rgba(0,217,165,.7)!important;color:#fff!important;opacity:.55}
+.cell.wrong{background:rgba(255,20,147,.35)!important;border-color:#FF1493!important;animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.bottombar{display:flex;justify-content:center;flex-wrap:wrap;padding:4px 10px 6px;gap:8px;flex-shrink:0}
+.bot-btn{height:48px;flex:0 1 170px;max-width:200px;border:2px solid rgba(255,107,53,.5);background:rgba(0,0,0,.4);border-radius:12px;color:#fff;font-size:1rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.start-btn{border-color:#FF6B35;background:linear-gradient(180deg,#ff8a5c,#FF6B35);box-shadow:0 0 18px rgba(255,107,53,.7)}
+.start-btn:disabled{opacity:.5}
+
+#doneOverlay{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;background:rgba(5,1,0,.92);text-align:center;padding:24px}
+#doneOverlay.show{display:flex}
+.done-box{max-width:380px}
+.done-box h2{font-size:1.6rem;margin-bottom:14px}
+.done-stats{font-size:.9rem;color:#c9b8a8;line-height:1.9;margin-bottom:28px}
+.done-stats b{color:#fff}
+</style>
+</head>
+<body>
+
+<div id="screen-intro">
+  <a class="intro-back" href="hooporia-lab.html">← Back</a>
+  <div class="vrr-logo">FLASH<span>FIND</span></div>
+  <div class="vrr-sub">Full Court · Hooporia Basketball Reaction</div>
+  <div class="intro-info">
+    <strong>NUMBERS STAY LIT</strong> — nothing hides, nothing to memorize<br>
+    <strong>TAP IN ORDER</strong> — 1, then 2, then 3… as fast as you can find each one<br>
+    <strong>SPEED SCORES</strong> — every tap scores on how fast it was, no fixed brackets<br>
+    <strong>10 ROUNDS</strong> — starts at 3 numbers, grows to 10, then holds<br>
+    <strong>TIMER GROWS WITH IT</strong> — more numbers to find, more time to find them
+  </div>
+  <button class="big-btn" id="startBtn">🏀 START</button>
+</div>
+
+<div id="screen-game">
+  <div class="topbar">
+    <div class="top-box"><div class="top-label">Score</div><div class="top-val" id="hSc">0</div></div>
+    <div class="top-box"><div class="top-label">Round</div><div class="top-val" id="hRd">1/10</div></div>
+    <div class="top-box"><div class="top-label">Finding</div><div class="top-val" id="hNext">1</div></div>
+    <div class="top-box"><div class="top-label">Last Tap</div><div class="top-val" id="hLast">--</div></div>
+    <div class="top-box"><div class="top-label">Timer</div><div class="top-val" id="hTm">--</div></div>
+  </div>
+  <div class="clockbar"><div class="clockbar-fill" id="clockFill" style="width:0%"></div></div>
+  <div class="msg-bar watch" id="msg">GET READY...</div>
+  <div class="court-area"><div class="court" id="court"></div></div>
+  <div class="bottombar">
+    <button class="bot-btn" id="menuBtn">← Home</button>
+  </div>
+</div>
+
+<div id="doneOverlay">
+  <div class="done-box">
+    <h2 id="doneTitle">Run Complete</h2>
+    <div class="done-stats" id="doneStats"></div>
+    <button class="big-btn" id="doneRestartBtn">↺ Play Again</button>
+  </div>
+</div>
+
+<script>
+(function(){
+
+var $=function(id){return document.getElementById(id)};
+
+var TOTAL_ROUNDS=10;
+var STARTING_COUNT=3;
+var MAX_NUMBERS=10;
+
+// Same continuous scoring formula as Reaction Speed — no fixed tiers,
+// just a smooth decay from a fast-tap ceiling down to a 1-point floor.
+// score = max(1, round(300 - reactionMs/4))
+function pointsFor(ms){
+  return Math.max(1,Math.round(300-ms/4));
+}
+
+// Same escalation shape already tested and confirmed elsewhere: base
+// timer plus 1500ms per number beyond the starting count, capped once
+// the round count itself caps at MAX_NUMBERS.
+function roundTimerMs(count){
+  var base=6000; // matches 100 BPM base timing used across Hooporia's memory games
+  var extra=(count-STARTING_COUNT)*1500;
+  return base+Math.max(0,extra);
+}
+
+var g={sc:0,round:0};
+var court=$('court');
+var cells=[];
+var numberCells=[];
+var nextNum=1;
+var roundCount=STARTING_COUNT;
+var lastTapAt=0;
+var phase='idle'; // idle | ready | playing | done
+var timers=[];
+var roundDeadline=0,roundRAF=null;
+
+function clrT(){timers.forEach(clearTimeout);timers=[]}
+
+function buildCourt(){
+  court.innerHTML='';cells=[];
+  for(var i=0;i<50;i++){
+    var c=document.createElement('div');
+    c.className='cell';
+    c.dataset.i=i;
+    c.addEventListener('pointerdown',(function(idx){return function(e){e.preventDefault();handleTap(idx)}})(i));
+    court.appendChild(c);
+    cells.push(c);
+  }
+}
+
+function shuffle(arr){for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t}return arr}
+
+function resetCellVisuals(){
+  cells.forEach(function(c){c.className='cell';c.textContent=''});
+}
+
+function msg(txt,cls){var el=$('msg');el.textContent=txt;el.className='msg-bar '+(cls||'watch')}
+
+function updateHUD(){
+  $('hSc').textContent=g.sc;
+  $('hRd').textContent=(g.round+1)+'/'+TOTAL_ROUNDS;
+  $('hNext').textContent=nextNum<=roundCount?nextNum:'—';
+}
+
+function stopRoundTimer(){if(roundRAF){cancelAnimationFrame(roundRAF);roundRAF=null}}
+
+function startRoundTimer(){
+  var dur=roundTimerMs(roundCount);
+  roundDeadline=performance.now()+dur;
+  function tick(){
+    var remain=roundDeadline-performance.now();
+    var pct=Math.max(0,remain/dur);
+    $('clockFill').style.width=(pct*100)+'%';
+    $('hTm').textContent=Math.max(0,remain/1000).toFixed(1)+'s';
+    if(remain<=0){roundRAF=null;handleRoundTimeout();return}
+    if(phase==='playing')roundRAF=requestAnimationFrame(tick);
+  }
+  roundRAF=requestAnimationFrame(tick);
+}
+
+function startRound(){
+  if(phase!=='idle'&&phase!=='ready')return;
+  clrT();stopRoundTimer();
+  resetCellVisuals();
+  nextNum=1;
+  phase='ready';
+  updateHUD();
+  $('hLast').textContent='--';
+
+  var indices=shuffle(Array.from({length:50},function(_,i){return i})).slice(0,roundCount);
+  numberCells=indices;
+  indices.forEach(function(idx,n){
+    cells[idx].className='cell lit';
+    cells[idx].textContent=(n+1);
+  });
+
+  msg('GET READY...','watch');
+  $('clockFill').style.width='100%';$('hTm').textContent='--';
+
+  timers.push(setTimeout(function(){
+    msg('⚡ GO! FIND 1','go');
+    phase='playing';
+    lastTapAt=performance.now();
+    startRoundTimer();
+  },700));
+}
+
+function handleTap(idx){
+  if(phase!=='playing')return;
+  if(nextNum>roundCount)return;
+
+  var targetIdx=numberCells[nextNum-1];
+
+  if(idx===targetIdx){
+    var now=performance.now();
+    var delta=now-lastTapAt;
+    var pts=pointsFor(delta);
+
+    cells[idx].className='cell correct';
+    g.sc+=pts;
+    lastTapAt=now;
+    $('hLast').textContent=Math.round(delta)+'ms · +'+pts;
+    nextNum++;
+    updateHUD();
+
+    if(nextNum>roundCount){
+      finishRoundClear();
+    }else{
+      msg('⚡ FIND '+nextNum,'go');
+    }
+  }else if(numberCells.indexOf(idx)!==-1){
+    // wrong order — visual feedback only, no penalty in this version
+    cells[idx].classList.add('wrong');
+    timers.push(setTimeout(function(){if(cells[idx]&&cells[idx].classList.contains('correct')===false)cells[idx].classList.remove('wrong')},220));
+  }
+  // tapping a blank cell does nothing
+}
+
+function finishRoundClear(){
+  phase='idle';clrT();stopRoundTimer();
+  msg('✅ ROUND CLEAR!','perfect');
+  timers.push(setTimeout(advanceRound,700));
+}
+
+function handleRoundTimeout(){
+  phase='idle';clrT();
+  msg("⏱ TIME'S UP — MOVING ON","miss");
+  timers.push(setTimeout(advanceRound,900));
+}
+
+function advanceRound(){
+  g.round++;
+  if(g.round>=TOTAL_ROUNDS){
+    finishRun();
+    return;
+  }
+  if(roundCount<MAX_NUMBERS)roundCount++;
+  phase='idle';
+  startRound();
+}
+
+function finishRun(){
+  phase='done';clrT();stopRoundTimer();
+  $('doneTitle').textContent='🏆 All 10 Rounds Complete!';
+  $('doneStats').innerHTML='<b>Final Score:</b> '+g.sc;
+  $('doneOverlay').className='show';
+}
+
+function resetGame(){
+  g={sc:0,round:0};
+  roundCount=STARTING_COUNT;
+  nextNum=1;
+  phase='idle';
+  $('doneOverlay').className='';
+  updateHUD();
+  startRound();
+}
+
+$('startBtn').addEventListener('click',function(){
+  $('screen-intro').style.display='none';
+  $('screen-game').style.display='flex';
+  buildCourt();
+  resetGame();
+});
+
+$('menuBtn').addEventListener('click',function(){
+  clrT();stopRoundTimer();phase='idle';
+  $('screen-game').style.display='none';
+  $('screen-intro').style.display='flex';
+});
+
+$('doneRestartBtn').addEventListener('click',resetGame);
+
+})();
+</script>
+</body>
+</html>
