@@ -253,7 +253,7 @@ function startRound(){
   updateHUD();
   $('hLastMs').textContent='--';
   $('roundBarFill').style.width='100%';$('hTimer').textContent='--';
-  msg('GET READY...','watch');
+  msg(roundCount+' TARGETS — GET READY','watch');
 
   // Only target 1 exists on screen at round start — 2 through N don't
   // get created until tap 1 actually lands. This is what makes the
@@ -261,11 +261,28 @@ function startRound(){
   // because the rest of the field genuinely doesn't exist yet.
   createTarget(1);
 
-  timers.push(setTimeout(function(){
-    targetPositions[0].el.classList.add('visible');
-    msg('⚡ GO! FIND 1','go');
-    phase='playing';
-  },700));
+  timers.push(setTimeout(runRoundCountdown,900));
+}
+
+// A real 3-2-1 in the message bar itself — not the full-screen overlay
+// used for the very first drill start. That overlay makes sense once;
+// hiding the score and round HUD behind a full black screen eight times
+// a game would just be repetitive. This stays lighter, right where the
+// player's already looking.
+function runRoundCountdown(){
+  var n=3;
+  msg(String(n),'go');
+  var iv=setInterval(function(){
+    n--;
+    if(n<=0){
+      clearInterval(iv);
+      targetPositions[0].el.classList.add('visible');
+      msg('⚡ GO! FIND 1','go');
+      phase='playing';
+    }else{
+      msg(String(n),'go');
+    }
+  },600);
 }
 
 // Places one numbered target at a random position that doesn't collide
