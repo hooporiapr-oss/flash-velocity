@@ -255,11 +255,9 @@ function startRound(){
   $('roundBarFill').style.width='100%';$('hTimer').textContent='--';
   msg(roundCount+' TARGETS — GET READY','watch');
 
-  // Only target 1 exists on screen at round start — 2 through N don't
-  // get created until tap 1 actually lands. This is what makes the
-  // untimed first tap safe: there's nothing to scan ahead and memorize,
-  // because the rest of the field genuinely doesn't exist yet.
-  createTarget(1);
+  // All targets are created now but stay hidden until the countdown
+  // finishes — nothing is tappable during "GET READY" or the 3-2-1.
+  for(var i=1;i<=roundCount;i++)createTarget(i);
 
   timers.push(setTimeout(runRoundCountdown,900));
 }
@@ -276,9 +274,14 @@ function runRoundCountdown(){
     n--;
     if(n<=0){
       clearInterval(iv);
-      targetPositions[0].el.classList.add('visible');
+      // The whole field opens at once, and the clock starts at this
+      // exact same instant — there's no gap between "I can see the
+      // targets" and "the timer is running" for anyone to exploit.
+      targetPositions.forEach(function(t){t.el.classList.add('visible')});
       msg('⚡ GO! FIND 1','go');
       phase='playing';
+      lastTapAt=performance.now();
+      startRoundTimer();
     }else{
       msg(String(n),'go');
     }
@@ -330,26 +333,10 @@ function handleTap(num,x,y){
 
   var t=targetPositions[num-1];
   var now=performance.now();
-  var pts;
-
-  if(num===1){
-    // The untimed first find — full baseline score, and this is the
-    // moment the round's actual clock (deadline + per-tap scoring)
-    // begins for everything that follows. Targets 2..N are created and
-    // revealed right here, not before — so there's nothing to scan
-    // ahead and memorize while tap 1 was still untimed.
-    pts=300;
-    lastTapAt=now;
-    $('hLastMs').textContent='FREE · +'+pts;
-    for(var n2=2;n2<=roundCount;n2++)createTarget(n2);
-    for(var n3=2;n3<=roundCount;n3++)targetPositions[n3-1].el.classList.add('visible');
-    startRoundTimer();
-  }else{
-    var delta=now-lastTapAt;
-    pts=pointsFor(delta);
-    $('hLastMs').textContent=Math.round(delta)+'ms · +'+pts;
-    lastTapAt=now;
-  }
+  var delta=now-lastTapAt;
+  var pts=pointsFor(delta);
+  $('hLastMs').textContent=Math.round(delta)+'ms · +'+pts;
+  lastTapAt=now;
 
   t.el.classList.add('done');
   ripple(x,y);flash();
