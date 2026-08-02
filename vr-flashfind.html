@@ -227,6 +227,7 @@ function clearTargets(){
   var layer=$('targets-layer');
   layer.innerHTML='';
   targetPositions=[];
+  placedPositions=[];
 }
 
 function stopRoundTimer(){if(roundRAF){cancelAnimationFrame(roundRAF);roundRAF=null}}
@@ -254,48 +255,48 @@ function startRound(){
   $('roundBarFill').style.width='100%';$('hTimer').textContent='--';
   msg('GET READY...','watch');
 
-  // Lay out `roundCount` targets at random, spaced-out positions —
-  // same random placement style as the original single-target version,
-  // just all present on screen together this time.
-  var pad=70;
-  var layer=$('targets-layer');
-  var placed=[];
-  for(var n=1;n<=roundCount;n++){
-    var x,y,tries=0,ok;
-    do{
-      x=pad+Math.random()*(innerWidth-pad*2);
-      y=140+Math.random()*(innerHeight-230);
-      ok=true;
-      for(var k=0;k<placed.length;k++){
-        var dx=placed[k].x-x,dy=placed[k].y-y;
-        if(Math.sqrt(dx*dx+dy*dy)<110){ok=false;break}
-      }
-      tries++;
-    }while(!ok&&tries<30);
-    placed.push({x:x,y:y});
-
-    var el=document.createElement('div');
-    el.className='rtarget';
-    el.style.left=x+'px';el.style.top=y+'px';
-    var size=90;
-    el.style.width=size+'px';el.style.height=size+'px';
-    el.innerHTML='<div class="rtarget-inner"></div>'+n;
-    el.dataset.num=n;
-    el.addEventListener('pointerdown',(function(num,x,y){return function(e){e.preventDefault();handleTap(num,x,y)}})(n,x,y));
-    layer.appendChild(el);
-    targetPositions.push({x:x,y:y,el:el});
-  }
+  // Only target 1 exists on screen at round start — 2 through N don't
+  // get created until tap 1 actually lands. This is what makes the
+  // untimed first tap safe: there's nothing to scan ahead and memorize,
+  // because the rest of the field genuinely doesn't exist yet.
+  createTarget(1);
 
   timers.push(setTimeout(function(){
-    targetPositions.forEach(function(t){t.el.classList.add('visible')});
+    targetPositions[0].el.classList.add('visible');
     msg('⚡ GO! FIND 1','go');
     phase='playing';
-    // Deliberately no timer or scoring clock starts here — finding the
-    // first number is a genuine cold scan of a field you haven't looked
-    // at yet, and shouldn't be measured the same way finding 2, 3, 4...
-    // is once your eyes are already partway oriented. The clock starts
-    // the instant tap 1 actually lands, in handleTap() below.
   },700));
+}
+
+// Places one numbered target at a random position that doesn't collide
+// with any already-placed target (including ones placed in an earlier
+// call, e.g. target 1 placed before 2..N exist).
+var placedPositions=[];
+function createTarget(n){
+  var pad=70;
+  var x,y,tries=0,ok;
+  do{
+    x=pad+Math.random()*(innerWidth-pad*2);
+    y=140+Math.random()*(innerHeight-230);
+    ok=true;
+    for(var k=0;k<placedPositions.length;k++){
+      var dx=placedPositions[k].x-x,dy=placedPositions[k].y-y;
+      if(Math.sqrt(dx*dx+dy*dy)<110){ok=false;break}
+    }
+    tries++;
+  }while(!ok&&tries<30);
+  placedPositions.push({x:x,y:y});
+
+  var el=document.createElement('div');
+  el.className='rtarget';
+  el.style.left=x+'px';el.style.top=y+'px';
+  var size=90;
+  el.style.width=size+'px';el.style.height=size+'px';
+  el.innerHTML='<div class="rtarget-inner"></div>'+n;
+  el.dataset.num=n;
+  el.addEventListener('pointerdown',(function(num,x,y){return function(e){e.preventDefault();handleTap(num,x,y)}})(n,x,y));
+  $('targets-layer').appendChild(el);
+  targetPositions[n-1]={x:x,y:y,el:el};
 }
 
 function handleTap(num,x,y){
@@ -317,10 +318,14 @@ function handleTap(num,x,y){
   if(num===1){
     // The untimed first find — full baseline score, and this is the
     // moment the round's actual clock (deadline + per-tap scoring)
-    // begins for everything that follows.
+    // begins for everything that follows. Targets 2..N are created and
+    // revealed right here, not before — so there's nothing to scan
+    // ahead and memorize while tap 1 was still untimed.
     pts=300;
     lastTapAt=now;
     $('hLastMs').textContent='FREE · +'+pts;
+    for(var n2=2;n2<=roundCount;n2++)createTarget(n2);
+    for(var n3=2;n3<=roundCount;n3++)targetPositions[n3-1].el.classList.add('visible');
     startRoundTimer();
   }else{
     var delta=now-lastTapAt;
