@@ -106,7 +106,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 </div>
 
 <div id="hud">
-  <div class="hud-box"><div class="hud-label">Left</div><div class="hud-val" id="hLeft">50</div></div>
+  <div class="hud-box"><div class="hud-label">Left</div><div class="hud-val" id="hLeft">25</div></div>
   <div class="hud-box"><div class="hud-label">Score</div><div class="hud-val" id="hScore">0</div></div>
   <div class="hud-box"><div class="hud-label">Last</div><div class="hud-val" id="hLastMs">--</div></div>
   <div class="hud-box"><div class="hud-label">Best</div><div class="hud-val" id="hBest">0</div></div>
@@ -130,7 +130,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   </div>
   <div class="vrr-logo">REACTION <span>SPEED</span></div>
   <div class="vrr-sub">Reaction Velocity · To The Beat</div>
-  <div class="rule-t"><b>50 targets.</b> A cell lights up — tap it as fast as you can. No deadline, no guessing which color — just how fast you are. Every reaction is scored on speed, and shown as its own beats-per-minute equivalent.</div>
+  <div class="rule-t"><b>25 targets.</b> A cell lights up — tap it as fast as you can. No deadline, no guessing which color — just how fast you are. Every reaction is scored on speed, and shown as its own beats-per-minute equivalent.</div>
   <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off" style="max-width:320px;margin:8px auto">
   <button class="big-btn" id="bigStart" data-i18n="start" onclick="handleStartClick()">▶ START</button>
   <div class="best-line" id="bestLine"></div>
@@ -155,7 +155,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <script>
 var BPM=100;
 var PACE_MS=Math.round(60000/BPM); // one full beat at 100 BPM between one tap resolving and the next target appearing
-var TOTAL=50;
+var TOTAL=25;
 var BEST_KEY='rct-reaction-speed-best';
 var BEST_MS_KEY='rct-reaction-speed-best-ms';
 
