@@ -144,6 +144,19 @@ var TOTAL=50;
 var BEST_KEY='rct-reaction-speed-best';
 var BEST_MS_KEY='rct-reaction-speed-best-ms';
 
+// The Gostar Digital standings board — reads from this table via the
+// standalone standings repo, separate from any personal-login system.
+var SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
+var SB_TABLE='vr_reaction_speed_standings';
+function recordScoreToStandings(name,finalScore,avgMs){
+  return fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({player_name:name,score:finalScore,avg_ms:avgMs,school_name:sessionStorage.getItem('reaction-velocity-school')||null})
+  }).catch(function(){});
+}
+
 function $(id){return document.getElementById(id)}
 
 var phase='idle';
@@ -301,6 +314,7 @@ function endDrill(){
   var isNewMs=avgRT>0&&(bestAvgMs===0||avgRT<bestAvgMs);
   if(isNewPts){best=finalScore;saveBest()}
   if(isNewMs){bestAvgMs=avgRT;saveBestMs()}
+  recordScoreToStandings(currentPlayerName,finalScore,avgRT);
 
   $('endNum').textContent=avgRT;
   $('endBpm').textContent=bpmFromMs(avgRT)+' BPM';
