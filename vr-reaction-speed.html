@@ -39,7 +39,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 .big-btn{width:100%;max-width:440px;height:72px;border:none;border-radius:20px;background:linear-gradient(135deg,#ff1e3c,#d6102e);color:#fff;font-size:1.3rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(255,30,60,.7);animation:btnPulse 2s ease-in-out infinite}
 @keyframes btnPulse{0%,100%{box-shadow:0 0 40px rgba(255,30,60,.7)}50%{box-shadow:0 0 80px rgba(255,30,60,1)}}
 .intro-back{position:fixed;top:16px;left:16px;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;text-decoration:none;z-index:60}
-.intro-fs{position:fixed;top:106px;right:16px;padding:8px 16px;border:2px solid rgba(255,30,60,.4);background:rgba(0,0,0,.5);color:#ff1e3c;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:60}
+.intro-fs{position:fixed;top:58px;right:16px;padding:8px 16px;border:2px solid rgba(255,30,60,.4);background:rgba(0,0,0,.5);color:#ff1e3c;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:60}
 @media(max-width:768px){.intro-fs{display:none}}
 .best-line{margin-top:18px;font-size:.85rem;color:#9fb3c8}
 .name-input{
@@ -48,7 +48,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   letter-spacing:.02em;text-align:center;font-family:Arial,sans-serif;margin-bottom:16px;
 }
 .name-input:focus{outline:none;border-color:#FF6B35;box-shadow:0 0 24px rgba(255,107,53,.35)}
-.box-lang-toggle{position:fixed;top:64px;right:16px;display:flex;gap:6px;z-index:60}
+.box-lang-toggle{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:60}
 .box-lang-btn{padding:7px 14px;border:1px solid rgba(255,107,53,.4);background:transparent;color:#9fb3c8;border-radius:8px;font-size:.72rem;font-weight:900;letter-spacing:.06em;cursor:pointer}
 .box-lang-btn.active{border-color:#FF6B35;color:#fff;background:rgba(255,107,53,.18)}
 .game-switcher{display:flex;gap:8px;max-width:420px;width:100%;margin:18px auto 0}
@@ -73,33 +73,6 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 </style>
 </head>
 <body>
-<button id="rp-sound-toggle" onclick="rpToggleSound()" aria-label="Toggle sound" title="Toggle beat sound" style="position:fixed;top:14px;right:14px;z-index:9999;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)">🔊</button>
-<script>
-(function(){
-  var _ctxs = [];
-  var NativeAC = window.AudioContext || window.webkitAudioContext;
-  if (NativeAC){
-    function WrappedAC(){
-      var ctx = new NativeAC();
-      _ctxs.push(ctx);
-      if (window.__rpMuted && ctx.suspend) { try{ctx.suspend()}catch(e){} }
-      return ctx;
-    }
-    WrappedAC.prototype = NativeAC.prototype;
-    window.AudioContext = WrappedAC;
-    window.webkitAudioContext = WrappedAC;
-  }
-  window.__rpMuted = false;
-  window.rpToggleSound = function(){
-    window.__rpMuted = !window.__rpMuted;
-    var btn = document.getElementById('rp-sound-toggle');
-    _ctxs.forEach(function(c){
-      try{ if(window.__rpMuted){ c.suspend&&c.suspend(); } else { c.resume&&c.resume(); } }catch(e){}
-    });
-    if(btn){ btn.textContent = window.__rpMuted ? '🔇' : '🔊'; btn.style.opacity = window.__rpMuted ? '.55' : '1'; }
-  };
-})();
-</script>
 
 <div id="space">
   <canvas id="stars"></canvas>
