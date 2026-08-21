@@ -65,19 +65,39 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 #screen-end{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#180000 0%,#000 70%);text-align:center;padding:20px}
 .final-num{font-size:6rem;font-weight:900;color:#ff1e3c;line-height:1;text-shadow:0 0 60px rgba(255,30,60,.9)}
 .final-label{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:#9fb3c8;margin-top:10px}
-.final-bpm{margin-top:10px;font-size:1.8rem;color:#ffd35a;font-weight:900}
-.final-acc{margin-top:6px;font-size:1.1rem;color:#9fb3c8;font-weight:900}
-#screen-end h2{font-size:1.8rem;font-weight:900;margin:24px 0 8px}
-#endSub{font-size:.9rem;color:#9fb3c8;line-height:1.6;max-width:400px}
-.next-player-btn{margin-top:28px;height:64px;padding:0 40px;border:none;border-radius:16px;background:linear-gradient(120deg,#ff1e3c,#d6102e);color:#fff;font-size:1.15rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 30px rgba(255,30,60,.6)}
-.session-line{margin-top:22px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#7fa8c0}
 
 #countdown{position:fixed;inset:0;z-index:56;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#180000 0%,#000 70%)}
 #bigCount{font-size:8rem;font-weight:900;color:#ff1e3c;text-shadow:0 0 60px rgba(255,30,60,.9)}
 @media(max-width:420px){.vrr-logo{font-size:2.1rem}.big-btn{height:60px;font-size:1.1rem}}
+#quarterStatsScreen{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:radial-gradient(ellipse at center,#12060a 0%,#000 70%);
+  flex-direction:column;align-items:center;justify-content:center;padding:24px;
+}
+.qs-title{font-size:1.7rem;font-weight:900;font-style:italic;letter-spacing:.03em;text-transform:uppercase;text-shadow:0 0 30px rgba(255,30,60,.6);margin-bottom:24px;text-align:center;color:#fff}
+.qs-board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:480px;margin-bottom:20px}
+.qs-cell{border-radius:12px;border:2px solid rgba(255,30,60,.35);background:rgba(255,30,60,.06);padding:12px 4px;text-align:center}
+.qs-cell.qs-current{border-color:#ff1e3c;background:rgba(255,30,60,.18);box-shadow:0 0 24px rgba(255,30,60,.5)}
+.qs-label{font-size:.56rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#ffb3ba;margin-bottom:4px;line-height:1.25}
+.qs-val{font-size:1.4rem;font-weight:900;color:#fff}
+.qs-total{font-size:1.1rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#ffb3ba;margin-bottom:26px}
+.qs-total span{font-size:1.6rem;color:#fff;margin-left:8px}
+.qs-next-btn{width:100%;max-width:420px;height:64px;border:none;border-radius:20px;background:linear-gradient(135deg,#ff1e3c,#ff6b35);color:#fff;font-size:1.05rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(255,30,60,.7)}
+.qs-next-btn:active{transform:scale(.98)}
 </style>
 </head>
 <body>
+<div id="quarterStatsScreen">
+  <div class="qs-title" id="qsTitle">1 REACTIFIC COMPLETE!</div>
+  <div class="qs-board">
+    <div class="qs-cell" id="qsCell1"><div class="qs-label">1 Reactific</div><div class="qs-val" id="qsQ1">0</div></div>
+    <div class="qs-cell" id="qsCell2"><div class="qs-label">2 Reaction Speed</div><div class="qs-val" id="qsQ2">0</div></div>
+    <div class="qs-cell" id="qsCell3"><div class="qs-label">3 Shoot It. Own It.</div><div class="qs-val" id="qsQ3">0</div></div>
+    <div class="qs-cell" id="qsCell4"><div class="qs-label">4 Make It Count.</div><div class="qs-val" id="qsQ4">0</div></div>
+  </div>
+  <div class="qs-total">Final Score: <span id="qsTotal">0</span></div>
+  <button class="qs-next-btn" id="qsNextBtn">NEXT: 2 REACTION SPEED →</button>
+</div>
 
 <div id="space">
   <canvas id="stars"></canvas>
@@ -128,13 +148,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <!-- END -->
 <div id="screen-end">
   <div class="final-num" id="endNum">0</div>
-  <div class="final-label">Avg Reaction Time (ms)</div>
-  <div class="final-bpm" id="endBpm"></div>
-  <div class="final-acc" id="endScoreLine"></div>
-  <h2 id="endHead">Drill Complete!</h2>
-  <div id="endSub">Great reflexes. Next player, beat this number!</div>
-  <button class="next-player-btn" id="nextPlayerBtn">▶ Next Player</button>
-  <div class="session-line" id="sessionLine"></div>
+  <div class="final-label">Total Points</div>
+  <a href="vr-shoot-it-own-it.html" onclick="sessionStorage.setItem('db-carryover-name',currentPlayerName)" style="display:block;margin-top:28px;max-width:280px;margin-left:auto;margin-right:auto;text-decoration:none;text-align:center;padding:14px 24px;border-radius:100px;background:linear-gradient(135deg,#ff1e3c,#ff6b35);color:#fff;font-weight:900;letter-spacing:1px;font-size:.95rem">▶ NEXT GAME</a>
 </div>
 
 <script>
@@ -163,7 +178,6 @@ var phase='idle';
 var idx=0,score=0,best=0,totalRT=0,rtCount=0,bestRT=0,bestAvgMs=0;
 var timers=[],targetEl=$('target'),targetInner=$('target-inner');
 var targetX=0,targetY=0,tapLocked=false,shownAt=0;
-var sessionBest=0, playersThisSession=0;
 
 var currentPlayerName='';
 function handleStartClick(){
@@ -181,6 +195,20 @@ function handleStartClick(){
 $('playerNameInputMain').addEventListener('keydown',function(e){
   if(e.key==='Enter')handleStartClick();
 });
+
+// Arriving here via "Next Game" from another game in the chain — the
+// name they already typed once carries over, so they're not asked to
+// type it again for what's really the same session, just a different
+// drill. Read once, then cleared, so it never lingers into a later,
+// unrelated visit to this same page.
+(function(){
+  var carried=sessionStorage.getItem('db-carryover-name');
+  if(carried){
+    $('playerNameInputMain').value=carried;
+    currentPlayerName=carried;
+    sessionStorage.removeItem('db-carryover-name');
+  }
+})();
 
 // Translations for the intro screen only — the title "Reaction
 // Speed" stays as-is in both languages, since it's a brand name, not
@@ -305,6 +333,44 @@ function handleTap(){
 
 function initAudio(){}
 
+var THIS_QUARTER=2;
+var QUARTER_SEQUENCE=[
+  {n:1,label:'1 Reactific',file:'vr-reactific.html'},
+  {n:2,label:'2 Reaction Speed',file:'vr-reaction-speed.html'},
+  {n:3,label:'3 Shoot It. Own It.',file:'vr-shoot-it-own-it.html'},
+  {n:4,label:'4 Make It Count.',file:'vr-make-it-count.html'}
+];
+function isFullGameActive(){return sessionStorage.getItem('hoop-fullgame-active')==='1'}
+function loadQuarterScores(){
+  try{return JSON.parse(sessionStorage.getItem('hoop-quarter-scores')||'{"q1":0,"q2":0,"q3":0,"q4":0}')}
+  catch(e){return {q1:0,q2:0,q3:0,q4:0}}
+}
+function showQuarterStats(finalScore){
+  var scores=loadQuarterScores();
+  scores['q'+THIS_QUARTER]=finalScore;
+  sessionStorage.setItem('hoop-quarter-scores',JSON.stringify(scores));
+  var total=scores.q1+scores.q2+scores.q3+scores.q4;
+
+  document.getElementById('qsTitle').textContent=QUARTER_SEQUENCE[THIS_QUARTER-1].label.toUpperCase()+' COMPLETE!';
+  document.getElementById('qsQ1').textContent=scores.q1;
+  document.getElementById('qsQ2').textContent=scores.q2;
+  document.getElementById('qsQ3').textContent=scores.q3;
+  document.getElementById('qsQ4').textContent=scores.q4;
+  document.getElementById('qsTotal').textContent=total;
+  for(var i=1;i<=4;i++)document.getElementById('qsCell'+i).classList.toggle('qs-current',i===THIS_QUARTER);
+
+  var nextBtn=document.getElementById('qsNextBtn');
+  if(THIS_QUARTER<4){
+    var nextQ=QUARTER_SEQUENCE[THIS_QUARTER];
+    nextBtn.textContent='NEXT: '+nextQ.label.toUpperCase()+' →';
+    nextBtn.onclick=function(){window.location.href=nextQ.file};
+  }else{
+    nextBtn.textContent='SEE FINAL SCORE →';
+    nextBtn.onclick=function(){window.location.href='reaction-velocity-final-score.html'};
+  }
+  document.getElementById('quarterStatsScreen').style.display='flex';
+}
+
 function endDrill(){
   if(phase==='done')return;
   phase='done';clrT();targetEl.classList.remove('visible');
@@ -316,29 +382,29 @@ function endDrill(){
   if(isNewMs){bestAvgMs=avgRT;saveBestMs()}
   recordScoreToStandings(currentPlayerName,finalScore,avgRT);
 
-  $('endNum').textContent=avgRT;
-  $('endBpm').textContent=bpmFromMs(avgRT)+' BPM';
-  $('endScoreLine').textContent=finalScore+' points';
+  $('endNum').textContent=finalScore;
 
-  if(isNewMs&&avgRT>0){$('endHead').textContent='🎉 New Best!';$('endSub').textContent='Your fastest average yet — '+avgRT+'ms. Lightning reflexes!'}
-  else{$('endHead').textContent='Drill Complete!';$('endSub').textContent='Great reflexes. Next player, beat this number!'}
-
-  if(avgRT>0&&(sessionBest===0||avgRT<sessionBest)){
-    sessionBest=avgRT;
+  if(isFullGameActive()){
+    showQuarterStats(finalScore);
+  }else{
+    $('screen-end').style.display='flex';
   }
-  playersThisSession++;
-  $('sessionLine').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+'ms · '+bpmFromMs(sessionBest)+' BPM'):'');
-
-  $('screen-end').style.display='flex';
 }
-
-function nextPlayer(){
-  $('screen-end').style.display='none';
-  startDrill();
-}
-$('nextPlayerBtn').onclick=nextPlayer;
 
 loadBest();
+
+// Reached as part of a tracked Full Game run — the player already
+// named themselves once at the hub, so asking again here would just
+// be a redundant interruption between quarters. Standalone practice
+// (arriving here directly, outside a Full Game run) still asks.
+if(isFullGameActive()){
+  var storedName=sessionStorage.getItem('hoop-player-name');
+  if(storedName){
+    currentPlayerName=storedName;
+    $('playerNameInputMain').value=storedName;
+    startDrill();
+  }
+}
 </script>
 </body>
 </html>
