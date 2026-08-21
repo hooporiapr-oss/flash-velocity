@@ -88,19 +88,40 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 #screen-end{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0a1a2e 0%,#000 70%);text-align:center;padding:20px}
 .final-num{font-size:6rem;font-weight:900;color:#00D9A5;line-height:1;text-shadow:0 0 60px rgba(0,217,165,.9)}
 .final-label{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:#9fb3c8;margin-top:10px}
-.final-bpm{margin-top:10px;font-size:1.8rem;color:#ffd35a;font-weight:900}
-.final-acc{margin-top:6px;font-size:1.1rem;color:#9fb3c8;font-weight:900}
-#screen-end h2{font-size:1.8rem;font-weight:900;margin:24px 0 8px}
-#endSub{font-size:.9rem;color:#9fb3c8;line-height:1.6;max-width:400px}
-.end-btns{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 
 /* countdown overlay */
 #countdown{position:fixed;inset:0;z-index:56;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#0a1a2e 0%,#000 70%)}
 #bigCount{font-size:8rem;font-weight:900;color:#00D9A5;text-shadow:0 0 60px rgba(0,217,165,.9)}
 @media(max-width:420px){.vrr-logo{font-size:2.1rem}.big-btn{height:60px;font-size:1.1rem}}
+#quarterStatsScreen{
+  display:none;position:fixed;inset:0;z-index:300;
+  background:radial-gradient(ellipse at center,#12060a 0%,#000 70%);
+  flex-direction:column;align-items:center;justify-content:center;padding:24px;
+}
+.qs-title{font-size:1.7rem;font-weight:900;font-style:italic;letter-spacing:.03em;text-transform:uppercase;text-shadow:0 0 30px rgba(255,30,60,.6);margin-bottom:24px;text-align:center;color:#fff}
+.qs-board{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;max-width:480px;margin-bottom:20px}
+.qs-cell{border-radius:12px;border:2px solid rgba(255,30,60,.35);background:rgba(255,30,60,.06);padding:12px 4px;text-align:center}
+.qs-cell.qs-current{border-color:#ff1e3c;background:rgba(255,30,60,.18);box-shadow:0 0 24px rgba(255,30,60,.5)}
+.qs-label{font-size:.56rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#ffb3ba;margin-bottom:4px;line-height:1.25}
+.qs-val{font-size:1.4rem;font-weight:900;color:#fff}
+.qs-total{font-size:1.1rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#ffb3ba;margin-bottom:26px}
+.qs-total span{font-size:1.6rem;color:#fff;margin-left:8px}
+.qs-next-btn{width:100%;max-width:420px;height:64px;border:none;border-radius:20px;background:linear-gradient(135deg,#ff1e3c,#ff6b35);color:#fff;font-size:1.05rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(255,30,60,.7)}
+.qs-next-btn:active{transform:scale(.98)}
 </style>
 </head>
 <body>
+<div id="quarterStatsScreen">
+  <div class="qs-title" id="qsTitle">1 REACTIFIC COMPLETE!</div>
+  <div class="qs-board">
+    <div class="qs-cell" id="qsCell1"><div class="qs-label">1 Reactific</div><div class="qs-val" id="qsQ1">0</div></div>
+    <div class="qs-cell" id="qsCell2"><div class="qs-label">2 Reaction Speed</div><div class="qs-val" id="qsQ2">0</div></div>
+    <div class="qs-cell" id="qsCell3"><div class="qs-label">3 Shoot It. Own It.</div><div class="qs-val" id="qsQ3">0</div></div>
+    <div class="qs-cell" id="qsCell4"><div class="qs-label">4 Make It Count.</div><div class="qs-val" id="qsQ4">0</div></div>
+  </div>
+  <div class="qs-total">Final Score: <span id="qsTotal">0</span></div>
+  <button class="qs-next-btn" id="qsNextBtn">NEXT: 2 REACTION SPEED →</button>
+</div>
 
 <div id="space">
   <canvas id="stars"></canvas>
@@ -156,16 +177,8 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <!-- END -->
 <div id="screen-end">
   <div class="final-num" id="endNum">0</div>
-  <div class="final-label">Avg Reaction Time (ms)</div>
-  <div class="final-bpm" id="endBpm"></div>
-  <div class="final-acc" id="endScoreLine"></div>
-  <h2 id="endHead">Drill Complete!</h2>
-  <div id="endSub">Great focus. Play again and beat your number.</div>
-  <div id="beatLine" style="margin-top:14px;font-size:1rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#FF1493;min-height:1.2em"></div>
-  <div class="end-btns">
-    <button class="ctrl-btn" id="nextPlayerBtn" style="background:linear-gradient(120deg,#00D9A5,#00c896);color:#062018;border:none;font-size:1.15rem;padding:16px 32px">▶ Next Player</button>
-  </div>
-  <div id="sessionBest" style="margin-top:22px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#7fa8c0"></div>
+  <div class="final-label">Total Points</div>
+  <a href="vr-reaction-speed.html" onclick="sessionStorage.setItem('db-carryover-name',currentPlayerName)" style="display:block;margin-top:28px;max-width:280px;margin-left:auto;margin-right:auto;text-decoration:none;text-align:center;padding:14px 24px;border-radius:100px;background:linear-gradient(135deg,#00D9A5,#FF6B35);color:#062018;font-weight:900;letter-spacing:1px;font-size:.95rem">▶ NEXT GAME</a>
 </div>
 
 <script>
@@ -237,6 +250,20 @@ function handleStartClick(){
 $('playerNameInputMain').addEventListener('keydown',function(e){
   if(e.key==='Enter')handleStartClick();
 });
+
+// Arriving here via "Next Game" from another game in the chain — the
+// name they already typed once carries over, so they're not asked to
+// type it again for what's really the same session, just a different
+// drill. Read once, then cleared, so it never lingers into a later,
+// unrelated visit to this same page.
+(function(){
+  var carried=sessionStorage.getItem('db-carryover-name');
+  if(carried){
+    $('playerNameInputMain').value=carried;
+    currentPlayerName=carried;
+    sessionStorage.removeItem('db-carryover-name');
+  }
+})();
 
 // Translations for the intro screen only — the title "Reactific"
 // stays as-is in both languages, since it's a brand name, not a
@@ -314,10 +341,6 @@ var fsb=$('fsBtn');
 if(fsb)fsb.onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
 var fsg=$('fsBtnGame');
 if(fsg)fsg.onclick=async function(){try{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()}catch(e){}};
-
-// Next Player — instant restart at the same tempo for a lined-up class
-var npb=$('nextPlayerBtn');
-if(npb)npb.onclick=nextPlayer;
 
 /* star field */
 (function(){
@@ -519,6 +542,44 @@ function beatTick(){
 function startBeat(){beatTick();beatTimer=setInterval(beatTick,60000/BEAT_BPM)}
 function stopBeat(){if(beatTimer){clearInterval(beatTimer);beatTimer=null}var bp=$('beat-pulse');if(bp)bp.style.opacity='0'}
 
+var THIS_QUARTER=1;
+var QUARTER_SEQUENCE=[
+  {n:1,label:'1 Reactific',file:'vr-reactific.html'},
+  {n:2,label:'2 Reaction Speed',file:'vr-reaction-speed.html'},
+  {n:3,label:'3 Shoot It. Own It.',file:'vr-shoot-it-own-it.html'},
+  {n:4,label:'4 Make It Count.',file:'vr-make-it-count.html'}
+];
+function isFullGameActive(){return sessionStorage.getItem('hoop-fullgame-active')==='1'}
+function loadQuarterScores(){
+  try{return JSON.parse(sessionStorage.getItem('hoop-quarter-scores')||'{"q1":0,"q2":0,"q3":0,"q4":0}')}
+  catch(e){return {q1:0,q2:0,q3:0,q4:0}}
+}
+function showQuarterStats(finalScore){
+  var scores=loadQuarterScores();
+  scores['q'+THIS_QUARTER]=finalScore;
+  sessionStorage.setItem('hoop-quarter-scores',JSON.stringify(scores));
+  var total=scores.q1+scores.q2+scores.q3+scores.q4;
+
+  document.getElementById('qsTitle').textContent=QUARTER_SEQUENCE[THIS_QUARTER-1].label.toUpperCase()+' COMPLETE!';
+  document.getElementById('qsQ1').textContent=scores.q1;
+  document.getElementById('qsQ2').textContent=scores.q2;
+  document.getElementById('qsQ3').textContent=scores.q3;
+  document.getElementById('qsQ4').textContent=scores.q4;
+  document.getElementById('qsTotal').textContent=total;
+  for(var i=1;i<=4;i++)document.getElementById('qsCell'+i).classList.toggle('qs-current',i===THIS_QUARTER);
+
+  var nextBtn=document.getElementById('qsNextBtn');
+  if(THIS_QUARTER<4){
+    var nextQ=QUARTER_SEQUENCE[THIS_QUARTER];
+    nextBtn.textContent='NEXT: '+nextQ.label.toUpperCase()+' →';
+    nextBtn.onclick=function(){window.location.href=nextQ.file};
+  }else{
+    nextBtn.textContent='SEE FINAL SCORE →';
+    nextBtn.onclick=function(){window.location.href='reaction-velocity-final-score.html'};
+  }
+  document.getElementById('quarterStatsScreen').style.display='flex';
+}
+
 function endDrill(){
   if(phase==='done')return;
   phase='done';clrT();stopBeat();stopReaction();stopGoNoGo();hideTarget();
@@ -532,41 +593,13 @@ function endDrill(){
   submitScore(finalScore);
   recordScoreToStandings(currentPlayerName,finalScore,avgRT);
 
-  $('endNum').textContent=avgRT;
-  $('endBpm').textContent=avgRT?(bpmFromMs(avgRT)+' BPM'):'--';
-  $('endScoreLine').textContent=finalScore+' reds caught';
+  $('endNum').textContent=finalScore;
 
-  if(isNewMs&&avgRT>0){$('endHead').textContent='🎉 New Best!';$('endSub').textContent='Your fastest average yet — '+avgRT+'ms. Amazing focus!'}
-  else{$('endHead').textContent='Drill Complete!';$('endSub').textContent='Great focus. Next player, beat this number!'}
-
-  // ── CLASS / PROMETHEON FLOW ──
-  // Track the fastest average reaction time this session (the number the class is chasing).
-  if(avgRT>0&&(sessionBest===0||avgRT<sessionBest)){
-    sessionBest=avgRT;
-    $('beatLine').textContent='🏆 Fastest to beat: '+avgRT+'ms';
-  }else if(sessionBest>0){
-    var gap=avgRT-sessionBest;
-    $('beatLine').textContent=(gap<=0)?'🔥 Tied the fastest!':('Fastest to beat: '+sessionBest+'ms  ('+gap+'ms slower)');
+  if(isFullGameActive()){
+    showQuarterStats(finalScore);
   }else{
-    $('beatLine').textContent='';
+    $('screen-end').style.display='flex';
   }
-  playersThisSession++;
-  $('sessionBest').textContent='Players this session: '+playersThisSession+(sessionBest>0?('  ·  Best: '+sessionBest+'ms · '+bpmFromMs(sessionBest)+' BPM'):'');
-
-  $('screen-end').style.display='flex';
-}
-
-// Session tracking for the lined-up class
-var sessionBest=0, sessionBestBy=0, playersThisSession=0;
-
-// Instant "next player" — same tempo, no page reload, straight into the countdown.
-function nextPlayer(){
-  $('screen-end').style.display='none';
-  phase='idle';taps=0;misses=0;
-  $('hTaps').textContent='0';
-  // reset any per-game state and go straight into the countdown at the SAME tempo
-  redsSeen=0;$('hReds')&&($('hReds').textContent='0');
-  startDrill();   // uses the already-selected tempo — no re-pick needed
 }
 
 function submitScore(score){
@@ -584,6 +617,19 @@ window.addEventListener('beforeunload',function(){
     navigator.sendBeacon(API+'/api/scores/game',JSON.stringify({game_id:GAME_ID,score:taps,level:1,mode:'compete'}));
   }
 });
+
+// Reached as part of a tracked Full Game run — the player already
+// named themselves once at the hub, so asking again here would just
+// be a redundant interruption between quarters. Standalone practice
+// (arriving here directly, outside a Full Game run) still asks.
+if(isFullGameActive()){
+  var storedName=sessionStorage.getItem('hoop-player-name');
+  if(storedName){
+    currentPlayerName=storedName;
+    $('playerNameInputMain').value=storedName;
+    startDrill();
+  }
+}
 </script>
 </body>
 </html>
