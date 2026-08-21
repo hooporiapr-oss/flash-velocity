@@ -61,7 +61,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 .big-btn{width:100%;max-width:440px;height:72px;border:none;border-radius:20px;background:linear-gradient(135deg,#00D9A5,#00b88d);color:#04121a;font-size:1.3rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 40px rgba(0,217,165,.7);animation:btnPulse 2s ease-in-out infinite}
 @keyframes btnPulse{0%,100%{box-shadow:0 0 40px rgba(0,217,165,.7)}50%{box-shadow:0 0 80px rgba(0,217,165,1)}}
 .intro-back{position:fixed;top:16px;left:16px;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;text-decoration:none;z-index:60}
-.intro-fs{position:fixed;top:16px;right:16px;padding:8px 16px;border:2px solid rgba(0,217,165,.4);background:rgba(0,0,0,.5);color:#00D9A5;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:60}
+.intro-fs{position:fixed;top:58px;right:16px;padding:8px 16px;border:2px solid rgba(0,217,165,.4);background:rgba(0,0,0,.5);color:#00D9A5;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;z-index:60}
 @media(max-width:768px){.intro-fs{display:none}}
 .best-line{margin-top:18px;font-size:.85rem;color:#9fb3c8}
 .name-input{
@@ -70,6 +70,9 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   letter-spacing:.02em;text-align:center;font-family:Arial,sans-serif;margin-bottom:16px;
 }
 .name-input:focus{outline:none;border-color:#FF6B35;box-shadow:0 0 24px rgba(255,107,53,.35)}
+.box-lang-toggle{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:60}
+.box-lang-btn{padding:7px 14px;border:1px solid rgba(255,107,53,.4);background:transparent;color:#9fb3c8;border-radius:8px;font-size:.72rem;font-weight:900;letter-spacing:.06em;cursor:pointer}
+.box-lang-btn.active{border-color:#FF6B35;color:#fff;background:rgba(255,107,53,.18)}
 .game-switcher{display:flex;gap:8px;max-width:420px;width:100%;margin:18px auto 0}
 .switcher-btn{flex:1;padding:10px 4px;border-radius:12px;text-decoration:none;text-align:center;font-size:.62rem;font-weight:900;letter-spacing:.04em;text-transform:uppercase;line-height:1.3}
 .switcher-btn.game-active{border:2px solid rgba(255,107,53,.5);background:rgba(255,107,53,.12);color:#ffb38a}
@@ -118,7 +121,11 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <!-- INTRO -->
 <div id="screen-intro">
   <a class="intro-back" href="index.html">← Exit</a>
-  <button class="intro-fs" id="fsBtn">⛶ Fullscreen</button>
+  <button class="intro-fs" id="fsBtn" data-i18n="fullscreen">⛶ Fullscreen</button>
+  <div class="box-lang-toggle">
+    <button class="box-lang-btn active" id="introLangEN">EN</button>
+    <button class="box-lang-btn" id="introLangES">ES</button>
+  </div>
   <div class="vrr-logo">REACT<span>IFIC</span></div>
   <div class="vrr-sub">Reaction Velocity · To The Beat of the Ritnome</div>
   <div class="tempo-label">Choose Your Ritnome</div>
@@ -128,7 +135,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
   </div>
   <div class="tempo-hint" id="tempoHint">Tap every target on the beat — except RED. 50 targets.</div>
   <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off" style="max-width:320px;margin:8px auto">
-  <button class="big-btn" id="bigStart" onclick="handleStartClick()">▶ START</button>
+  <button class="big-btn" id="bigStart" data-i18n="start" onclick="handleStartClick()">▶ START</button>
   <div class="best-line" id="bestLine"></div>
   <div class="game-switcher">
     <span class="switcher-btn game-current">Reactific</span>
@@ -210,6 +217,42 @@ $('playerNameInputMain').addEventListener('keydown',function(e){
   if(e.key==='Enter')handleStartClick();
 });
 
+// Translations for the intro screen only — the title "Reactific"
+// stays as-is in both languages, since it's a brand name, not a
+// description, same as every other game in this family.
+var INTRO_I18N={
+  en:{
+    fullscreen:'⛶ Fullscreen',
+    start:'🔴 START · TAP ONLY ON RED'
+  },
+  es:{
+    fullscreen:'⛶ Pantalla Completa',
+    start:'🔴 EMPEZAR · TOCA SOLO EN ROJO'
+  }
+};
+var introLang='en';
+function applyIntroTranslations(){
+  var t=INTRO_I18N[introLang];
+  $('fsBtn').textContent=t.fullscreen;
+  // The start button's text is otherwise driven by refreshIntro()
+  // below, tied to game state rather than a fixed label — deferring
+  // to it here keeps this toggle from fighting that existing logic.
+  if(typeof refreshIntro==='function')refreshIntro();
+  else $('bigStart').textContent=t.start;
+}
+$('introLangEN').addEventListener('click',function(){
+  introLang='en';
+  this.classList.add('active');
+  $('introLangES').classList.remove('active');
+  applyIntroTranslations();
+});
+$('introLangES').addEventListener('click',function(){
+  introLang='es';
+  this.classList.add('active');
+  $('introLangEN').classList.remove('active');
+  applyIntroTranslations();
+});
+
 /* tempo-aware best (device + server) */
 function loadBestForTempo(){
   best=0;
@@ -232,7 +275,7 @@ var HINTS={
 };
 function refreshIntro(){
   $('tempoHint').textContent=HINTS[tempo]||'';
-  $('bigStart').textContent='🔴 START · TAP ONLY ON RED';
+  $('bigStart').textContent=INTRO_I18N[introLang].start;
 }
 function selectTempo(t){
   tempo=t;
