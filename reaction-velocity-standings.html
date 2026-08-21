@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+if (sessionStorage.getItem('reaction-velocity-standings-gate-pass') !== '1') {
+  window.location.replace('index.html');
+}
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>REACTION VELOCITY — STANDINGS</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;color:#fff;background:#000;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+#screen-box{display:flex;position:fixed;inset:0;z-index:200;flex-direction:column;align-items:center;background:radial-gradient(ellipse at center,#12060a 0%,#000 70%);padding:20px 16px 24px;overflow-y:auto}
+.box-title{font-size:1.7rem;font-weight:900;font-style:italic;letter-spacing:.06em;text-transform:uppercase;color:#fff;text-shadow:0 0 40px rgba(255,30,60,.8);margin-bottom:2px}
+.box-title span{color:#ff1e3c}
+.box-sub{font-size:.72rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:#ffb38a;margin-bottom:20px}
+.box-back-btn{align-self:flex-start;padding:8px 16px;border:2px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;border-radius:999px;cursor:pointer;margin-bottom:20px}
+.box-empty{color:#8892a0;font-size:.85rem;padding:24px 8px;font-style:italic;text-align:center}
+
+.standings-row-header,.standings-row{display:grid;grid-template-columns:24px 1fr 32px 32px 32px 32px 56px;gap:4px;align-items:center;padding:10px 6px;border-radius:10px;width:100%;max-width:640px}
+.standings-row-header{font-size:.58rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#8892a0;padding:0 8px 8px}
+.standings-row{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);margin-bottom:6px}
+.standings-row.rank-1{border-color:rgba(255,211,90,.5);background:rgba(255,211,90,.08)}
+.standings-row.rank-2{border-color:rgba(200,200,220,.4);background:rgba(200,200,220,.06)}
+.standings-row.rank-3{border-color:rgba(255,140,66,.4);background:rgba(255,140,66,.06)}
+.sr-rank{font-weight:900;color:#ff1e3c}
+.standings-row.rank-1 .sr-rank{color:#ffd35a}
+.sr-name{text-align:left;font-weight:700;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sr-q{font-size:.78rem;color:#9fb3c8}
+.sr-total{font-weight:900;color:#fff;font-size:1rem}
+.standings-wrap{width:100%;display:flex;flex-direction:column;align-items:center}
+
+#exitBtn{
+  position:fixed;top:16px;right:16px;z-index:20;
+  padding:8px 16px;border-radius:999px;border:2px solid rgba(255,255,255,.25);
+  background:rgba(0,0,0,.5);color:#fff;font-size:.78rem;font-weight:900;
+  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div id="screen-box">
+  <button class="box-back-btn" id="refreshBtn" type="button">🔄 Refresh</button>
+  <button id="exitBtn" type="button">Exit →</button>
+  <div class="box-title">THE <span>STANDINGS</span></div>
+  <div class="box-sub" id="boxSub">Reaction Velocity · Best Final Score Per Player</div>
+
+  <div class="standings-wrap">
+    <div class="standings-row-header">
+      <span></span><span style="text-align:left">Player</span><span>1</span><span>2</span><span>3</span><span>4</span><span>Final</span>
+    </div>
+    <div id="standingsList" style="width:100%;display:flex;flex-direction:column;align-items:center"></div>
+  </div>
+</div>
+
+<script>
+function $(id){return document.getElementById(id)}
+
+var SB_URL='https://sdaphocueugzfvjovuxd.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYXBob2N1ZXVnemZ2am92dXhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2MjQyMDgsImV4cCI6MjA5OTIwMDIwOH0.pDAzf4P6dD9eNEBlnP95SdF5BI-R84-Rdc0vKzYcn7M';
+var SB_TABLE='reaction_velocity_standings';
+
+function fetchStandings(){
+  var school=sessionStorage.getItem('reaction-velocity-standings-school')||'';
+  var url=SB_URL+'/rest/v1/'+SB_TABLE+'?select=player_name,q1_score,q2_score,q3_score,q4_score,total_score&order=total_score.desc&school_name=eq.'+encodeURIComponent(school);
+  return fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+    .then(function(r){if(!r.ok)throw new Error('bad response');return r.json()})
+    .then(function(rows){
+      var best={};
+      (rows||[]).forEach(function(r){
+        var existing=best[r.player_name];
+        if(!existing||r.total_score>existing.total){
+          best[r.player_name]={name:r.player_name,q1:r.q1_score,q2:r.q2_score,q3:r.q3_score,q4:r.q4_score,total:r.total_score};
+        }
+      });
+      return Object.keys(best).map(function(n){return best[n]}).sort(function(a,b){return b.total-a.total});
+    });
+}
+
+function renderStandings(){
+  var listEl=$('standingsList');
+  listEl.innerHTML='<div class="box-empty">Loading standings…</div>';
+
+  fetchStandings().then(function(ranked){
+    if(!ranked.length){
+      listEl.innerHTML='<div class="box-empty">No players yet — be the first name on the board.</div>';
+      return;
+    }
+    listEl.innerHTML=ranked.map(function(p,i){
+      var rankClass=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+      var safeName=p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return '<div class="standings-row '+rankClass+'">'
+        +'<span class="sr-rank">'+(i+1)+'</span>'
+        +'<span class="sr-name">'+safeName+'</span>'
+        +'<span class="sr-q">'+p.q1+'</span>'
+        +'<span class="sr-q">'+p.q2+'</span>'
+        +'<span class="sr-q">'+p.q3+'</span>'
+        +'<span class="sr-q">'+p.q4+'</span>'
+        +'<span class="sr-total">'+p.total+'</span>'
+        +'</div>';
+    }).join('');
+  }).catch(function(){
+    listEl.innerHTML='<div class="box-empty">Couldn\'t load standings right now — try again in a moment.</div>';
+  });
+}
+
+var schoolName=sessionStorage.getItem('reaction-velocity-standings-school');
+if(schoolName){document.getElementById('boxSub').textContent=schoolName+' · Best Final Score Per Player';}
+renderStandings();
+document.getElementById('refreshBtn').addEventListener('click', renderStandings);
+document.getElementById('exitBtn').addEventListener('click', function(){
+  sessionStorage.removeItem('reaction-velocity-standings-gate-pass');
+  window.location.href = 'index.html';
+});
+setInterval(renderStandings, 30000);
+</script>
+
+</body>
+</html>
