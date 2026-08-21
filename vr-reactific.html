@@ -131,7 +131,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 </div>
 
 <div id="hud">
-  <div class="hud-box"><div class="hud-label" id="hRedLabel">Reds</div><div class="hud-val"><span id="hReds">0</span><span style="font-size:.7rem;color:#5a6472"> / <span id="hRedTotal">50</span></span></div></div>
+  <div class="hud-box"><div class="hud-label" id="hRedLabel">Reds</div><div class="hud-val"><span id="hReds">0</span><span style="font-size:.7rem;color:#5a6472"> / <span id="hRedTotal">25</span></span></div></div>
   <div class="hud-box"><div class="hud-label">Score</div><div class="hud-val" id="hTaps">0</div></div>
   <div class="hud-box"><div class="hud-label">Best</div><div class="hud-val" id="hBest">0</div></div>
 </div>
@@ -159,7 +159,7 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
     <button class="tempo-btn active" data-tempo="80" style="--tc:#00D9A5"><span class="t-bpm">80</span><span class="t-unit">RITNOME</span><small>Fast</small></button>
     <button class="tempo-btn" data-tempo="100" style="--tc:#ff6b00"><span class="t-bpm">100</span><span class="t-unit">RITNOME</span><small>Elite</small></button>
   </div>
-  <div class="tempo-hint" id="tempoHint">Tap every target on the beat — except RED. 50 targets.</div>
+  <div class="tempo-hint" id="tempoHint">Tap every target on the beat — except RED. 25 targets.</div>
   <input type="text" id="playerNameInputMain" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off" style="max-width:320px;margin:8px auto">
   <button class="big-btn" id="bigStart" data-i18n="start" onclick="handleStartClick()">▶ START</button>
   <div class="best-line" id="bestLine"></div>
@@ -206,8 +206,8 @@ var TIERS={
   '80': {bpm:80,  color:'#00D9A5', glow:'rgba(0,217,165,1)', gid:'drill',    bestKey:'rct-drill-best',    centered:false, flashMs:750},
   '100':{bpm:100, color:'#ff6b00', glow:'rgba(255,107,0,1)', gid:'drill100', bestKey:'rct-drill100-best', centered:false, flashMs:600}
 };
-var TOTAL_REDS=50;             // ends after 50 reds have appeared
-var TOTAL_TARGETS=50;
+var TOTAL_REDS=25;             // ends after 25 reds have appeared
+var TOTAL_TARGETS=25;
 var tempo='80';
 var BEAT_BPM=80,COLOR='#00D9A5',GLOW='rgba(0,217,165,1)',SIZE=72,GAME_ID='drill',BEST_KEY='rct-drill-best';
 var GO_NO_GO=true,FLASH_MS=500,BUST_ON=true,CENTERED=true;
@@ -318,8 +318,8 @@ function loadBestForTempo(){
 
 /* tempo selector */
 var HINTS={
-  '80':'Moving target, colors flash to the Ritnome — tap ONLY on RED. 50 reds.',
-  '100':'Faster moving target — tap ONLY on RED. 50 reds.'
+  '80':'Moving target, colors flash to the Ritnome — tap ONLY on RED. 25 reds.',
+  '100':'Faster moving target — tap ONLY on RED. 25 reds.'
 };
 function refreshIntro(){
   $('tempoHint').textContent=HINTS[tempo]||'';
@@ -413,7 +413,7 @@ function stopReaction(){if(reactionTimer){clearTimeout(reactionTimer);reactionTi
    RED is one of the colors. Tap on RED = score. Tap non-red = penalty.
    80/100: target MOVES each color change (coordination + reaction).
    120: target stays CENTERED (pure reaction).
-   Game ends after TOTAL_REDS (100) reds have appeared. ── */
+   Game ends after TOTAL_REDS (25) reds have appeared. ── */
 var GNG_NONRED=[
   {name:'blue',  c:'#2f7bff', g:'rgba(47,123,255,1)'},
   {name:'green', c:'#00D9A5', g:'rgba(0,217,165,1)'},
@@ -472,7 +472,7 @@ function gngCycle(){
     redOnsetAt=performance.now();
     redsSeen++;
     $('hReds')&&($('hReds').textContent=redsSeen);
-    if(redsSeen>=TOTAL_REDS){        // 100 reds have appeared — end after this one shows briefly
+    if(redsSeen>=TOTAL_REDS){        // 25 reds have appeared — end after this one shows briefly
       timers.push(setTimeout(function(){if(phase==='running')endDrill()},FLASH_MS));
     }
   }
