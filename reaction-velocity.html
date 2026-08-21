@@ -71,6 +71,45 @@ body{
 
 .footer{text-align:center;padding:0 24px 40px;font-size:.72rem;color:#5a6472;letter-spacing:.08em;text-transform:uppercase}
 .footer a{color:#8892a0;text-decoration:none}
+
+.fullgame-btn{
+  display:block;
+  width:100%;
+  max-width:440px;
+  margin:0 auto 26px;
+  padding:16px 20px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg,#ff1e3c,#ff6b35);
+  color:#fff;
+  font-size:.95rem;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  cursor:pointer;
+  box-shadow:0 0 40px rgba(255,30,60,.6);
+}
+.fullgame-btn:active{transform:scale(.98)}
+
+/* Name entry — required before every full-game run, since the
+   standings on the final score screen only mean something if every
+   entry is honestly attributed to a real player. */
+#screen-name-entry{
+  position:fixed;inset:0;z-index:50;display:none;flex-direction:column;
+  align-items:center;justify-content:center;background:#000;padding:24px;text-align:center;
+}
+.name-entry-title{
+  font-size:1.5rem;font-weight:900;font-style:italic;letter-spacing:.03em;
+  text-transform:uppercase;margin-bottom:10px;text-shadow:0 0 30px rgba(255,30,60,.6);
+}
+.name-entry-title span{color:#ff1e3c}
+.name-entry-sub{font-size:.85rem;color:#a7adba;line-height:1.5;max-width:400px;margin-bottom:26px}
+.name-input{
+  width:100%;max-width:400px;padding:16px;border-radius:14px;border:2px solid rgba(255,30,60,.4);
+  background:rgba(255,255,255,.06);color:#fff;font-size:1.2rem;font-weight:900;
+  letter-spacing:.02em;text-align:center;font-family:Arial,sans-serif;margin-bottom:16px;
+}
+.name-input:focus{outline:none;border-color:#ff1e3c;box-shadow:0 0 24px rgba(255,30,60,.35)}
 </style>
 </head>
 <body>
@@ -116,7 +155,18 @@ body{
   </a>
 </div>
 
+<div style="max-width:840px;margin:0 auto;padding:0 24px">
+  <button class="fullgame-btn" id="fullGameBtn">🏀 PLAY THE FULL GAME</button>
+</div>
+
 <div class="footer">Powered by <a href="#">Ritnome</a></div>
+
+<div id="screen-name-entry">
+  <div class="name-entry-title">WHO'S <span>PLAYING?</span></div>
+  <div class="name-entry-sub">Enter your name to run all four. Your final score gets tracked on the standings — every player competing for the same board.</div>
+  <input type="text" id="playerNameInput" class="name-input" maxlength="20" placeholder="Your name" autocomplete="off">
+  <button class="fullgame-btn" id="nameContinueBtn" style="max-width:400px">▶ Continue</button>
+</div>
 
 <script>
 // Ticker mimics real reaction-time readouts: settles, then reacts to a fresh
@@ -139,6 +189,34 @@ body{
   }
   settle();
 })();
+
+// Starts a real, tracked four-quarter run — a fresh scoreboard, and a
+// flag each game checks for on its own end screen. Standalone play
+// (clicking straight into any one card above) never sets this, so
+// nothing changes for solo practice on a single game.
+function showNameEntry(){
+  document.getElementById('screen-name-entry').style.display='flex';
+  setTimeout(function(){document.getElementById('playerNameInput').focus()},50);
+}
+document.getElementById('fullGameBtn').addEventListener('click',showNameEntry);
+
+document.getElementById('nameContinueBtn').addEventListener('click',function(){
+  var name=document.getElementById('playerNameInput').value.trim();
+  if(!name){
+    var input=document.getElementById('playerNameInput');
+    input.focus();
+    input.style.borderColor='#ff1e3c';
+    setTimeout(function(){input.style.borderColor=''},600);
+    return;
+  }
+  sessionStorage.setItem('hoop-player-name',name.slice(0,20));
+  sessionStorage.setItem('hoop-fullgame-active','1');
+  sessionStorage.setItem('hoop-quarter-scores',JSON.stringify({q1:0,q2:0,q3:0,q4:0}));
+  window.location.href='vr-reactific.html';
+});
+document.getElementById('playerNameInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter')document.getElementById('nameContinueBtn').click();
+});
 </script>
 
 </body>
