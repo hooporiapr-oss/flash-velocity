@@ -492,7 +492,7 @@ function handleTap(){
       var rt=performance.now()-redOnsetAt;
       totalRT+=rt;rtCount++;
       if(taps<0)taps=0;
-      taps++;
+      taps+=100;
       $('hTaps').textContent=Math.max(0,taps);
       sn.textContent=Math.max(0,taps);
       sn.style.transform='scale(1.35)';sn.style.color='#eafff6';
@@ -506,15 +506,15 @@ function handleTap(){
       misses++;
       penaltyFlash();
       if(BUST_ON){
-        taps=taps-1;                  // 120: can go negative, -3 ends the game
-        if(taps<=-3){
+        taps=taps-100;                // -300 ends the game (3 wrong taps at -100 each)
+        if(taps<=-300){
           $('hTaps').textContent=Math.max(0,taps);
           msg('✗ NOT RED!','miss');
           endDrill();
           return;
         }
       }else{
-        taps=Math.max(0,taps-1);      // 80/100: just lose a point, floored at 0
+        taps=Math.max(0,taps-100);    // just lose the points, floored at 0
       }
       $('hTaps').textContent=Math.max(0,taps);
       sn.textContent=Math.max(0,taps);
