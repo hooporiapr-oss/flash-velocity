@@ -573,11 +573,16 @@ function showQuarterStats(finalScore){
     var nextQ=QUARTER_SEQUENCE[THIS_QUARTER];
     nextBtn.textContent='NEXT: '+nextQ.label.toUpperCase()+' →';
     nextBtn.onclick=function(){window.location.href=nextQ.file};
+    document.getElementById('quarterStatsScreen').style.display='flex';
   }else{
-    nextBtn.textContent='SEE FINAL SCORE →';
-    nextBtn.onclick=function(){window.location.href='reaction-velocity-final-score.html'};
+    // The 4th quarter's own transition screen would just repeat the
+    // same Q1-Q4 breakdown the actual final-score page already
+    // shows, so there's nothing worth pausing on here — go straight
+    // to the page that writes the run to standings, with zero action
+    // required from the player after their last tap of the game.
+    sessionStorage.setItem('hoop-fullgame-active','0');
+    window.location.href='reaction-velocity-final-score.html';
   }
-  document.getElementById('quarterStatsScreen').style.display='flex';
 }
 
 function endDrill(){
