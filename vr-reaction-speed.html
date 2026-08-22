@@ -116,13 +116,13 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;co
 <div id="target"><div id="target-inner"></div></div>
 
 <div id="controls">
-  <a class="ctrl-btn" href="index.html">← Exit</a>
+  <a class="ctrl-btn" href="reaction-velocity.html">← Exit</a>
   <button class="ctrl-btn" id="fsBtnGame">⛶ Full Court</button>
 </div>
 
 <!-- INTRO -->
 <div id="screen-intro">
-  <a class="intro-back" href="index.html">← Exit</a>
+  <a class="intro-back" href="reaction-velocity.html">← Exit</a>
   <button class="intro-fs" id="fsBtn" data-i18n="fullscreen">⛶ Fullscreen</button>
   <div class="box-lang-toggle">
     <button class="box-lang-btn active" id="introLangEN">EN</button>
@@ -393,18 +393,15 @@ function endDrill(){
 
 loadBest();
 
-// Reached as part of a tracked Full Game run — the player already
-// named themselves once at the hub, so asking again here would just
-// be a redundant interruption between quarters. Standalone practice
-// (arriving here directly, outside a Full Game run) still asks.
-if(isFullGameActive()){
-  var storedName=sessionStorage.getItem('hoop-player-name');
-  if(storedName){
-    currentPlayerName=storedName;
-    $('playerNameInputMain').value=storedName;
-    startDrill();
-  }
-}
+// Every visit launches straight into gameplay now — the name-entry
+// screen only ever mattered so the standings write had a real name
+// to attribute a score to, but solo practice on this game no longer
+// needs that (only the combined Full Game run's standings matter
+// now), so there's nothing meaningful for a typed name to add here.
+var storedName=sessionStorage.getItem('hoop-player-name');
+currentPlayerName=storedName||'Player';
+$('playerNameInputMain').value=currentPlayerName;
+startDrill();
 </script>
 </body>
 </html>
