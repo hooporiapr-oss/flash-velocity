@@ -247,6 +247,7 @@ body.buzzer-shake{animation:buzzerShake .5s cubic-bezier(.36,.07,.19,.97) 2}
 </div>
 
 <div id="controls">
+  <a class="ctrl-btn" href="reaction-velocity.html">← Exit</a>
   <button class="ctrl-btn" id="fsBtnGame">⛶ Full Screen</button>
 </div>
 
@@ -813,7 +814,7 @@ function endDrill(){
     if(isFullGameActive()){
       showQuarterStats(finalScore);
     }else{
-      $('screen-end').style.display='flex';
+      window.location.href='reaction-velocity.html';
     }
   },500));
 }
